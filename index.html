@@ -24,9 +24,10 @@ body.ark .btn{color:#04101f}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
 .dim{color:var(--dim)}
 h1{font-size:34px}h2{font-size:24px}h3{font-size:18px}
-input[type=text],input[type=number],select{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--tx);font:inherit;width:100%}
+input[type=text],input[type=number],input[type=password],select{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--tx);font:inherit;width:100%}
 /* menu / client */
 .wrap{max-width:520px;margin:0 auto;padding:18px 16px 40px;display:flex;flex-direction:column;gap:14px}
+.wrap.wide{max-width:780px}
 .hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;background:var(--card);border:1px solid var(--line);font-size:14px}
 .tm{font-variant-numeric:tabular-nums;font-weight:800}
@@ -150,6 +151,7 @@ const now=()=>Date.now();
 
 let mode='menu',peer=null,conn=null,G=null,N=null,V=null,skew=0,myPid=null,roomCode=null,drawerOpen=false,ui={},qrCache={},tickTimer=null,AC=null;
 const params=new URLSearchParams(location.search);
+let audioOn=false,peeking=false,peekTimer=null,locked=false,hostPin=null;
 
 /* ------------------------- 畫面輔助 ------------------------- */
 function setHTML(html){
@@ -172,14 +174,18 @@ function floatDM(text,color){
   d.style.top=(8+rnd(60))+'vh';d.style.color=color||'#fff';d.style.animationDuration=(9+rnd(5))+'s';
   $('#dm').appendChild(d);setTimeout(()=>d.remove(),15000);
 }
-function beep(f,d){
-  if(!G||!G.settings.sound)return;
+function sendScreens(m){if(!G)return;G.screens.forEach(c=>{if(c.open)try{c.send(m);}catch(e){}});}
+function dmAll(text,color){sendScreens({t:'dm',text,color});}
+function beep(f,d){if(G&&G.settings.sound)sendScreens({t:'fx',b:[f,d||.18]});}
+function narrate(t){if(G&&G.settings.narrate)sendScreens({t:'fx',s:t});}
+function playBeep(f,d){
   try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+(d||.18));}catch(e){}
 }
-function narrate(t){
-  if(!G||!G.settings.narrate||typeof speechSynthesis==='undefined')return;
+function playSay(t){
+  if(typeof speechSynthesis==='undefined')return;
   try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='zh-TW';u.rate=.95;speechSynthesis.speak(u);}catch(e){}
 }
+function enableAudio(){audioOn=true;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();AC.resume();}catch(e){}playBeep(660,.2);C.render();}
 function updateTimers(){
   if(!V)return;
   const rem=V.paused&&V.remain!=null?V.remain:(V.deadline?V.deadline-(now()+skew):null);
@@ -192,7 +198,7 @@ setInterval(()=>{try{updateTimers();}catch(e){}},250);
    HOST：遊戲狀態與規則引擎
    ===================================================================== */
 function newGame(code,keep){
-  G={room:code,theme:keep?keep.theme:'forest',phase:'lobby',round:0,players:keep?keep.players:[],aud:keep?keep.aud:[],
+  G={room:code,theme:keep?keep.theme:'forest',phase:'lobby',round:0,players:keep?keep.players:[],aud:keep?keep.aud:[],screens:keep?keep.screens:[],
      settings:keep?keep.settings:{talkSec:45,nightSec:25,voteSec:30,lastSec:20,reveal:false,edge:false,autoEvent:true,narrate:true,sound:true},
      deadline:0,onTimeout:null,paused:false,remain:0,botT:{},potions:{heal:true,poison:true},wolfLog:[],
      speakerQ:[],speaker:null,speakerMuted:false,dawn:null,vote:null,voteRes:null,audBless:{},event:null,talkMul:1,fog:false,
@@ -203,7 +209,7 @@ const byId=id=>G.players.find(p=>p.id===id);
 const alive=()=>G.players.filter(p=>p.alive);
 function uniqueName(n){let x=n,i=2;while(G.players.some(p=>p.name===x))x=n+i++;return x;}
 function addPlayer(name,bot){
-  const p={id:uid(),name,bot:!!bot,alive:true,role:null,cards:[],notes:[],online:!bot,conn:null,shield:false,muteNext:false,mutedToday:false,deathCause:null};
+  const p={id:uid(),tok:uid()+uid(),name,bot:!!bot,alive:true,role:null,cards:[],notes:[],online:!bot,conn:null,shield:false,muteNext:false,mutedToday:false,deathCause:null};
   G.players.push(p);return p;
 }
 function setTimer(sec,fn){G.deadline=now()+sec*1000;G.onTimeout=fn;G.botT={};G.paused=false;}
@@ -326,7 +332,7 @@ function endGame(w){
 function resetToLobby(){
   G.players=G.players.filter(p=>!p.bot||true);
   G.players.forEach(p=>{p.role=null;p.alive=true;p.cards=[];p.notes=[];p.shield=false;});
-  const keep={theme:G.theme,players:G.players,aud:G.aud,settings:G.settings};
+  const keep={theme:G.theme,players:G.players,aud:G.aud,screens:G.screens,settings:G.settings};
   newGame(G.room,keep);go('lobby');push();
 }
 
@@ -378,6 +384,7 @@ function push(){
   if(!G)return;
   G.players.forEach(p=>{if(p.conn&&p.conn.open)try{p.conn.send(viewFor(p));}catch(e){}});
   G.aud.forEach(a=>{if(a.conn&&a.conn.open)try{a.conn.send(viewFor(a,true));}catch(e){}});
+  if(G.screens.length){const sv=screenView();G.screens.forEach(c=>{if(c.open)try{c.send(sv);}catch(e){}});}
   if(mode==='host')renderHost();
 }
 const sendTo=(p,m)=>{if(p.conn&&p.conn.open)try{p.conn.send(m);}catch(e){}};
@@ -398,7 +405,7 @@ function chat(p,text,isAud){
   text=String(text||'').trim().slice(0,40);if(!text)return;
   const t=now();if(p.lastChat&&t-p.lastChat<2500)return;
   if(!isAud&&p.alive&&G.phase!=='lobby'&&G.phase!=='end')return;
-  p.lastChat=t;floatDM((isAud?'':'💀 ')+p.name+'：'+text,isAud?'#ffe27a':'#ff9aa8');
+  p.lastChat=t;dmAll((isAud?'':'💀 ')+p.name+'：'+text,isAud?'#ffe27a':'#ff9aa8');
 }
 function doAct(p,m){
   if(G.paused)return sendTo(p,{t:'toast',text:'遊戲暫停中'});
@@ -491,36 +498,50 @@ function startHost(){
   peer.on('error',e=>{if(e.type==='unavailable-id'){try{peer.destroy();}catch(_){}startHost();}else toast('連線服務錯誤：'+e.type);});
   peer.on('connection',hostConn);
 }
+function screenView(){const v=viewFor({id:'__scr'},true);v.screen=true;v.joinP=joinUrl(false);v.joinA=joinUrl(true);return v;}
 function hostConn(c){
   let pid=null,kind=null;
   c.on('data',m=>{
     if(!m||typeof m!=='object')return;
     if(m.t==='hello'){
       const name=String(m.name||'').trim().slice(0,8)||'玩家';
-      if(m.aud){
-        let a=m.pid&&G.aud.find(x=>x.id===m.pid);if(!a){a={id:uid(),name,lastChat:0};G.aud.push(a);}
-        a.conn=c;pid=a.id;kind='aud';c.send({t:'welcome',pid:a.id,kind:'aud'});c.send(viewFor(a,true));if(mode==='host')renderHost();return;
+      if(m.screen){
+        if(G.screens.filter(x=>x.open).length>=4){c.send({t:'err',text:'大螢幕連線數已達上限'});return;}
+        kind='screen';G.screens.push(c);c.send({t:'welcome',kind:'screen'});c.send(screenView());if(mode==='host')renderHost();return;
       }
-      let p=m.pid&&G.players.find(x=>x.id===m.pid);
+      if(m.aud){
+        let a=m.tok&&G.aud.find(x=>x.tok===m.tok);if(!a){a={id:uid(),tok:uid()+uid(),name,lastChat:0};G.aud.push(a);}
+        a.conn=c;pid=a.id;kind='aud';c.send({t:'welcome',tok:a.tok,kind:'aud'});c.send(viewFor(a,true));if(mode==='host')renderHost();return;
+      }
+      let p=m.tok&&G.players.find(x=>x.tok===m.tok);
       if(p){p.conn=c;p.online=true;}
       else if(G.phase==='lobby'&&G.players.length<12){p=addPlayer(uniqueName(name));p.conn=c;}
       else{c.send({t:'err',text:G.phase==='lobby'?'房間已滿（最多 12 人）':'遊戲已開始，請改用「觀眾」身分加入'});return;}
-      pid=p.id;kind='p';c.send({t:'welcome',pid:p.id,kind:'p'});push();return;
+      pid=p.id;kind='p';c.send({t:'welcome',tok:p.tok,kind:'p'});push();return;
     }
     if(!pid)return;
     if(kind==='p'){const p=byId(pid);if(p)onPlayerMsg(p,m);}
-    else{const a=G.aud.find(x=>x.id===pid);if(a)onAudMsg(a,m);}
+    else if(kind==='aud'){const a=G.aud.find(x=>x.id===pid);if(a)onAudMsg(a,m);}
   });
   c.on('close',()=>{
     if(kind==='p'){const p=byId(pid);if(p&&p.conn===c){p.online=false;p.conn=null;push();}}
     else if(kind==='aud'){const a=G.aud.find(x=>x.id===pid);if(a&&a.conn===c){a.conn=null;}}
+    else if(kind==='screen'){G.screens=G.screens.filter(x=>x!==c);if(mode==='host')renderHost();}
   });
 }
 const joinUrl=(aud)=>{const base=location.href.split('?')[0].split('#')[0];return base+'?room='+roomCode+(aud?'&aud=1':'');};
 
 /* --- H：主持人按鈕處理 --- */
+const screenUrl=()=>location.href.split('?')[0].split('#')[0]+'?room='+G.room+'&screen=1';
 const H={
-  drawer(){drawerOpen=!drawerOpen;renderHost();},
+  peek(){peeking=!peeking;clearTimeout(peekTimer);if(peeking)peekTimer=setTimeout(()=>{peeking=false;renderHost();},8000);renderHost();},
+  lock(){
+    if(!hostPin){const p=prompt('設定 4 位數解鎖密碼（鎖定時畫面會全部隱藏，遊戲仍會繼續）');if(!/^\d{4}$/.test((p||'').trim())){toast('請輸入 4 位數字');return;}hostPin=p.trim();}
+    locked=true;peeking=false;renderHost();
+  },
+  unlock(){const e=document.getElementById('pinIn');if(e&&e.value===hostPin){locked=false;renderHost();}else toast('密碼不正確');},
+  copy(){const u=screenUrl();try{navigator.clipboard.writeText(u);toast('已複製大螢幕網址');}catch(e){toast(u);}},
+  openScreen(){window.open(screenUrl(),'_blank');},
   theme(k){G.theme=k;push();},
   set(k,val){G.settings[k]=val;push();},
   num(k,val){G.settings[k]=Math.max(5,Math.min(300,+val||30));push();},
@@ -541,7 +562,7 @@ const H={
   skip(){if(G.onTimeout&&!G.paused)finishEarly();},
   event(t){triggerEvent(t);},
   again(){resetToLobby();},
-  say(){const e=document.getElementById('hmsg');if(e&&e.value.trim()){floatDM(TH[G.theme].t.dm+'：'+e.value.trim().slice(0,40),'#9fffd0');e.value='';}}
+  say(){const e=document.getElementById('hmsg');if(e&&e.value.trim()){dmAll(TH[G.theme].t.dm+'：'+e.value.trim().slice(0,40),'#9fffd0');e.value='';}}
 };
 
 function avatarOf(v,id){const i=v.players.findIndex(p=>p.id===id);return TH[v.theme].avatars[(i<0?0:i)%12];}
@@ -560,11 +581,11 @@ function screenHTML(v){
   const evb=v.event&&['talk','vote','voteResult'].includes(v.phase)?'<div class="banner">'+esc(v.event.text)+'</div>':'';
   if(v.phase==='lobby'){
     main='<div class="huge">'+th.emoji+' '+esc(th.name)+'</div><div class="sub">'+esc(th.grade)+'　'+esc(th.story)+'</div>'
-      +'<div class="qrs"><div class="qrbox"><h3>📱 玩家掃碼加入</h3><div class="qr" data-url="'+esc(joinUrl(false))+'"></div></div>'
-      +'<div class="qrbox"><h3>👀 觀眾掃碼（彈幕）</h3><div class="qr" data-url="'+esc(joinUrl(true))+'"></div></div></div>'
+      +'<div class="qrs"><div class="qrbox"><h3>📱 玩家掃碼加入</h3><div class="qr" data-url="'+esc(v.joinP||'')+'"></div></div>'
+      +'<div class="qrbox"><h3>👀 觀眾掃碼（彈幕）</h3><div class="qr" data-url="'+esc(v.joinA||'')+'"></div></div></div>'
       +'<div>房號 <span class="room">'+v.room+'</span></div>'
-      +(location.protocol==='file:'?'<div class="banner" style="background:#ff7a7a;color:#fff">⚠️ 目前是本機檔案，手機無法連線；請先上傳到 GitHub Pages 再開房</div>':'')
-      +pgrid(v,{online:true})+'<div class="sub">已加入 '+v.players.length+' / 12 人　👀 觀眾 '+v.audCount+' 人（按右下角「🎛 主控台」開始遊戲）</div>';
+      
+      +pgrid(v,{online:true})+'<div class="sub">已加入 '+v.players.length+' / 12 人　👀 觀眾 '+v.audCount+' 人（請主持人在主控台開始遊戲）</div>';
   }else if(v.phase==='reveal'){
     main='<div class="moon">🎴</div><div class="huge">請查看手機上的身分牌</div><div class="sub">確認後請勿讓別人看到，遊戲即將開始</div>'+pgrid(v);
   }else if(v.phase==='night'){
@@ -598,11 +619,20 @@ function screenHTML(v){
   }
   return '<div class="top"><div>'+th.emoji+' '+esc(th.name)+'　<span class="chip">第 '+v.round+' 輪・'+PHASE_NAME[v.phase]+'</span></div><div>'+(v.room?'房號 '+v.room:'')+'</div><div class="tm"></div></div><div class="main">'+main+'</div>';
 }
-function drawerHTML(){
-  if(!drawerOpen)return '';
-  const th=TH[G.theme];const S=G.settings;const lobby=G.phase==='lobby';
+function lockHTML(){
+  return '<div class="wrap"><div class="panel col rest"><div class="big">🔒</div><h2>主控台已鎖定</h2><div class="dim">遊戲仍在進行中</div><input type="password" id="pinIn" inputmode="numeric" maxlength="4" placeholder="輸入 4 位數密碼" style="text-align:center"><button class="btn" onclick="H.unlock()">解鎖</button></div></div>';
+}
+function consoleHTML(){
+  const th=TH[G.theme],S=G.settings,lobby=G.phase==='lobby';
+  const online=G.players.filter(p=>p.bot||p.online).length;
   const tog=(k,l)=>'<label class="row"><input type="checkbox" '+(S[k]?'checked':'')+' onchange="H.set(\''+k+'\',this.checked)"> '+l+'</label>';
-  let h='<div class="drawer"><div class="hd"><h3>🎛 主持人主控台</h3><button class="btn sec sm" onclick="H.drawer()">收起</button></div>';
+  let h='<div class="wrap wide"><div class="hd"><h2>🎛 主持人主控台</h2><div class="row"><span class="chip">🔒 私密</span><button class="btn sec sm" onclick="H.lock()">鎖定畫面</button></div></div>'
+   +'<div class="panel col"><div class="row"><span class="dim">房號</span><span class="room" style="font-size:38px;letter-spacing:5px">'+G.room+'</span></div>'
+   +'<div class="row"><span class="chip">🖥 大螢幕 '+G.screens.filter(c=>c.open).length+'</span><span class="chip">📱 玩家 '+online+'/'+G.players.length+'</span><span class="chip">👀 觀眾 '+G.aud.filter(a=>a.conn).length+'</span></div>'
+   +'<div class="note">⚠️ 這個畫面含有所有人的真實身分，請只在自己的裝置使用，<b>不要投影、不要分享螢幕</b>。大螢幕請用另一個裝置開啟下列網址（或在大螢幕裝置選「我是大螢幕」並輸入房號）：</div>'
+   +'<div class="note" style="word-break:break-all">'+esc(screenUrl())+'</div>'
+   +'<div class="row"><button class="btn sec sm" onclick="H.copy()">複製大螢幕網址</button><button class="btn sec sm" onclick="H.openScreen()">在新分頁開大螢幕</button></div>'
+   +(location.protocol==='file:'?'<div class="note" style="background:#ff7a7a55">目前是本機檔案，手機與大螢幕無法連線，請先上傳到 GitHub Pages 再開房</div>':'')+'</div>';
   if(lobby){
     h+='<div class="panel col"><b>主題</b><div class="row">'+Object.values(TH).map(t=>'<button class="btn sm '+(G.theme===t.key?'':'sec')+'" onclick="H.theme(\''+t.key+'\')">'+t.emoji+' '+t.grade.slice(0,3)+'</button>').join('')+'</div>'
       +'<div class="dim">'+esc(th.name)+'</div></div>'
@@ -613,37 +643,43 @@ function drawerHTML(){
       +'<div class="field">夜間每步驟<input type="number" value="'+S.nightSec+'" onchange="H.num(\'nightSec\',this.value)"></div>'
       +'<div class="field">投票時間<input type="number" value="'+S.voteSec+'" onchange="H.num(\'voteSec\',this.value)"></div>'
       +'<div class="field">遺言時間<input type="number" value="'+S.lastSec+'" onchange="H.num(\'lastSec\',this.value)"></div>'
-      +tog('autoEvent','白天自動隨機事件')+tog('reveal','淘汰後公開身分')+tog('edge','屠邊規則（神職全滅＝反派勝）')+tog('narrate','語音旁白')+tog('sound','音效')+'</div>'
+      +tog('autoEvent','白天自動隨機事件')+tog('reveal','淘汰後公開身分')+tog('edge','屠邊規則（神職全滅＝反派勝）')+tog('narrate','大螢幕語音旁白')+tog('sound','大螢幕音效')+'</div>'
       +'<button class="btn" '+(G.players.length<6?'disabled':'')+' onclick="H.start()">▶ 開始遊戲（需 6–12 人）</button>';
   }else{
-    h+='<div class="panel col"><div class="row"><span class="chip">第 '+G.round+' 輪・'+PHASE_NAME[G.phase]+'</span><span class="chip tm"></span></div>'
+    const mk=t=>peeking?t:'<span class="dim">••••</span>';
+    h+='<div class="panel col"><div class="row"><span class="chip">第 '+G.round+' 輪・'+PHASE_NAME[G.phase]+'</span><span class="chip">倖存 '+alive().length+'/'+G.players.length+'</span><span class="chip">⏱ <span class="tm"></span></span></div>'
       +'<div class="row"><button class="btn sec sm" onclick="H.pause()">'+(G.paused?'▶ 繼續':'⏸ 暫停')+'</button><button class="btn sec sm" onclick="H.skip()">⏭ 跳過／提前結束</button></div>'
-      +'<div class="row"><button class="btn sec sm" onclick="H.event(\'storm\')">'+th.t.ev.storm.slice(0,2)+' 發言減半</button><button class="btn sec sm" onclick="H.event(\'gift\')">🎁 送卡</button><button class="btn sec sm" onclick="H.event(\'fog\')">🌫 票數保密</button></div></div>'
-      +'<div class="panel"><b>上帝視角</b><table><tr><th>玩家</th><th>身分</th><th>狀態</th><th>卡牌</th></tr>'
-      +G.players.map(p=>'<tr style="'+(p.alive?'':'opacity:.5')+'"><td>'+esc(p.name)+(p.bot?'🤖':(p.online?'':'📴'))+'</td><td>'+(p.role?th.roles[p.role][1]+th.roles[p.role][0]:'')+'</td><td>'+(p.alive?'存活':'淘汰')+(p.shield?'🛡':'')+'</td><td>'+p.cards.map(c=>th.cards[c][1]).join('')+'</td></tr>').join('')+'</table>'
-      +'<div class="dim" style="margin-top:6px">'+(N&&G.phase==='night'?'夜間步驟：'+(N.step==='wolf'?'大灰狼/寄生者選目標':'神職與卡牌行動')+(N.wolfTarget?'　目標：'+esc(byId(N.wolfTarget).name):''):'')+'</div></div>'
+      +'<div class="row"><button class="btn sec sm" onclick="H.event(\'storm\')">⛈ 發言減半</button><button class="btn sec sm" onclick="H.event(\'gift\')">🎁 送卡</button><button class="btn sec sm" onclick="H.event(\'fog\')">🌫 票數保密</button></div></div>'
+      +'<div class="panel"><div class="hd"><b>上帝視角</b><button class="btn sm '+(peeking?'bad':'sec')+'" onclick="H.peek()">'+(peeking?'🙈 隱藏':'👁 顯示身分（8 秒後自動隱藏）')+'</button></div>'
+      +'<table><tr><th>玩家</th><th>身分</th><th>狀態</th><th>卡牌</th></tr>'
+      +G.players.map(p=>'<tr style="'+(p.alive?'':'opacity:.5')+'"><td>'+esc(p.name)+(p.bot?'🤖':(p.online?'':'📴'))+'</td><td>'+(p.role?mk(th.roles[p.role][1]+th.roles[p.role][0]):'')+'</td><td>'+(p.alive?'存活':'淘汰')+(p.shield?'🛡':'')+'</td><td>'+mk(p.cards.map(c=>th.cards[c][1]).join(''))+'</td></tr>').join('')+'</table>'
+      +'<div class="dim" style="margin-top:6px">'+(peeking&&N&&G.phase==='night'?'夜間步驟：'+(N.step==='wolf'?'大灰狼／寄生者選目標':'神職與卡牌行動')+(N.wolfTarget?'　目標：'+esc(byId(N.wolfTarget).name):''):'')+'</div></div>'
       +(G.phase==='end'?'<button class="btn" onclick="H.again()">🔄 回到大廳再玩一局</button>':'');
   }
-  h+='<div class="panel col"><b>對全場廣播彈幕</b><input type="text" id="hmsg" maxlength="40" placeholder="'+th.t.dm+'的話…"><button class="btn sec sm" onclick="H.say()">發送</button></div></div>';
+  h+='<div class="panel col"><b>對大螢幕廣播彈幕</b><input type="text" id="hmsg" maxlength="40" placeholder="'+th.t.dm+'的話…"><button class="btn sec sm" onclick="H.say()">發送</button></div></div>';
   return h;
 }
 function renderHost(){
-  V=viewFor({id:'__host'},true);skew=0;
+  V=screenView();skew=0;
   document.body.className=V.theme+' ph-'+V.phase;
-  setHTML('<div class="screen">'+screenHTML(V)+'</div><button class="btn" id="dbtn" onclick="H.drawer()">🎛 主控台</button>'+drawerHTML());
+  setHTML(locked?lockHTML():consoleHTML());
   updateTimers();
 }
 
 /* =====================================================================
    CLIENT：玩家 / 觀眾
    ===================================================================== */
-function startClient(room,aud){
-  mode=aud?'aud':'player';roomCode=room;
-  const key='tgww_'+room+(aud?'_a':'');
-  myPid=localStorage.getItem(key+'_pid')||null;
-  const nameKey='tgww_name';
-  setHTML('<div class="wrap"><h2>'+(aud?'👀 觀眾':'📱 玩家')+'加入房間 '+esc(room)+'</h2><div class="panel col"><input type="text" id="nameIn" maxlength="8" placeholder="你的暱稱（最多 8 字）" value="'+esc(localStorage.getItem(nameKey)||'')+'"><button class="btn" onclick="C.join()">加入</button></div><div class="dim" id="cmsg"></div></div>');
+function startClient(room,kind){
+  mode=kind==='aud'?'aud':kind==='screen'?'screen':'player';roomCode=room;
+  const key='tgww_'+room+'_'+mode;
+  myPid=localStorage.getItem(key+'_tok')||null;
   window._ckey=key;
+  if(mode==='screen'){
+    setHTML('<div class="wrap"><h2>🖥 大螢幕連線中…</h2><div class="dim">房號 '+esc(room)+'</div><div class="dim" id="cmsg"></div></div>');
+    C.connect('大螢幕');return;
+  }
+  const nameKey='tgww_name';
+  setHTML('<div class="wrap"><h2>'+(mode==='aud'?'👀 觀眾':'📱 玩家')+'加入房間 '+esc(room)+'</h2><div class="panel col"><input type="text" id="nameIn" maxlength="8" placeholder="你的暱稱（最多 8 字）" value="'+esc(localStorage.getItem(nameKey)||'')+'"><button class="btn" onclick="C.join()">加入</button></div><div class="dim" id="cmsg"></div></div>');
   if(myPid&&localStorage.getItem(nameKey)){setTimeout(()=>C.join(true),50);}
 }
 let reconnectTimer=null,joined=false;
@@ -660,7 +696,7 @@ const C={
     peer=new Peer();
     peer.on('open',()=>{
       conn=peer.connect('tgww-'+roomCode,{reliable:true});
-      conn.on('open',()=>{conn.send({t:'hello',name:name||localStorage.getItem('tgww_name')||'玩家',pid:myPid,aud:mode==='aud'});});
+      conn.on('open',()=>{conn.send({t:'hello',name:name||localStorage.getItem('tgww_name')||'玩家',tok:myPid,aud:mode==='aud',screen:mode==='screen'});});
       conn.on('data',C.onMsg);
       conn.on('close',C.lost);conn.on('error',C.lost);
     });
@@ -672,9 +708,11 @@ const C={
     clearTimeout(reconnectTimer);reconnectTimer=setTimeout(()=>C.connect(),3000);
   },
   onMsg(m){
-    if(m.t==='welcome'){myPid=m.pid;joined=true;localStorage.setItem(window._ckey+'_pid',m.pid);}
+    if(m.t==='welcome'){joined=true;if(m.tok){myPid=m.tok;localStorage.setItem(window._ckey+'_tok',m.tok);}}
     else if(m.t==='state'){joined=true;const pv=V;V=m;skew=m.now-now();if(!pv||pv.phase!==m.phase||pv.round!==m.round)ui={};C.render();}
     else if(m.t==='toast')toast(m.text);
+    else if(m.t==='dm'&&mode==='screen')floatDM(m.text,m.color);
+    else if(m.t==='fx'&&mode==='screen'&&audioOn){if(m.b)playBeep(m.b[0],m.b[1]);if(m.s)playSay(m.s);}
     else if(m.t==='err'){toast(m.text);const e=$('#cmsg');if(e)e.textContent=m.text;joined=false;}
   },
   send(m){if(conn&&conn.open)conn.send(m);},
@@ -686,7 +724,9 @@ const C={
   render(){
     if(!V){return;}
     document.body.className=V.theme+' ph-'+V.phase;
-    setHTML(V.aud?audHTML():playerHTML());updateTimers();
+    if(mode==='screen')setHTML('<div class="screen">'+screenHTML(V)+'</div>'+(audioOn?'':'<button class="btn" id="dbtn" onclick="enableAudio()">🔊 點擊開啟聲音與旁白</button>'));
+    else setHTML(V.aud?audHTML():playerHTML());
+    updateTimers();
   }
 };
 function chatBox(){return '<div class="panel col"><b>💬 發送彈幕</b><div class="row"><input type="text" id="dmIn" maxlength="40" placeholder="想說什麼？" style="flex:1"><button class="btn sm" onclick="C.chat()">送出</button></div></div>';}
@@ -782,14 +822,14 @@ function askPanel(a){
    ===================================================================== */
 function menu(){
   setHTML('<div class="wrap"><div style="text-align:center;padding:20px 0"><div style="font-size:64px">🐺🚀</div><h1>數位狼人殺</h1><div class="dim">同樂版・1 台大螢幕＋N 支手機＋觀眾彈幕</div></div>'
-    +'<button class="btn" onclick="startHost()">🎬 我是主持人（開房／大螢幕）</button>'
+    +'<button class="btn" onclick="startHost()">🎬 我是主持人（私人主控台）</button>'
     +'<div class="panel col"><b>我有房號</b><input type="text" id="roomIn" maxlength="4" inputmode="numeric" placeholder="4 位數房號">'
-    +'<div class="row"><button class="btn sec" onclick="menuJoin(false)">📱 當玩家</button><button class="btn sec" onclick="menuJoin(true)">👀 當觀眾</button></div></div>'
-    +'<div class="dim" style="text-align:center">提示：主持人請用電腦或平板開大螢幕；玩家直接掃大螢幕上的 QR Code。</div></div>');
+    +'<div class="row"><button class="btn sec" onclick="menuJoin(\'player\')">📱 當玩家</button><button class="btn sec" onclick="menuJoin(\'aud\')">👀 當觀眾</button><button class="btn sec" onclick="menuJoin(\'screen\')">🖥 我是大螢幕</button></div></div>'
+    +'<div class="dim" style="text-align:center">提示：主持人用自己的手機／平板開「私人主控台」；大螢幕請用另一台裝置開「大螢幕」；玩家掃大螢幕上的 QR Code。</div></div>');
 }
-function menuJoin(aud){const r=(document.getElementById('roomIn')||{}).value;if(!/^\d{4}$/.test((r||'').trim())){toast('請輸入 4 位數房號');return;}startClient(r.trim(),aud);}
+function menuJoin(kind){const r=(document.getElementById('roomIn')||{}).value;if(!/^\d{4}$/.test((r||'').trim())){toast('請輸入 4 位數房號');return;}startClient(r.trim(),kind);}
 function boot(){
-  if(params.get('room'))startClient(params.get('room'),params.get('aud')==='1');
+  if(params.get('room'))startClient(params.get('room'),params.get('screen')==='1'?'screen':params.get('aud')==='1'?'aud':'player');
   else menu();
 }
 boot();
