@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>數位狼人殺・同樂版</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f2418;--bg2:#1f4a30;--ac:#ffd36b;--ac2:#7be0a6;--tx:#f3f7ee;--dim:#a9c4b2;--card:rgba(255,255,255,.09);--line:rgba(255,255,255,.16);--bad:#ff7a7a}
+body.ark{--bg:#050a1c;--bg2:#10224a;--ac:#4de1ff;--ac2:#a78bff;--tx:#e6f3ff;--dim:#8aa8cf;--card:rgba(77,225,255,.08);--line:rgba(77,225,255,.25);--bad:#ff5577}
+html,body{min-height:100%}
+body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--tx);background:radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg));background-attachment:fixed;transition:background .8s}
+body.ph-night{background:radial-gradient(1400px 800px at 50% -10%,#14143a,#03030c)}
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{background:var(--ac);color:#10241a;border:0;border-radius:12px;padding:12px 18px;font-weight:700;font-size:16px}
+body.ark .btn{color:#04101f}
+.btn.sec{background:var(--card);color:var(--tx);border:1px solid var(--line)}
+.btn.bad{background:var(--bad);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.sel{outline:3px solid var(--tx)}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:8px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.col{display:flex;flex-direction:column;gap:10px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.dim{color:var(--dim)}
+h1{font-size:34px}h2{font-size:24px}h3{font-size:18px}
+input[type=text],input[type=number],select{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--tx);font:inherit;width:100%}
+/* menu / client */
+.wrap{max-width:520px;margin:0 auto;padding:18px 16px 40px;display:flex;flex-direction:column;gap:14px}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;background:var(--card);border:1px solid var(--line);font-size:14px}
+.tm{font-variant-numeric:tabular-nums;font-weight:800}
+.tm.low{color:var(--bad)}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.rolecard{text-align:center;padding:26px 16px;border-radius:20px;border:2px solid var(--ac);background:linear-gradient(160deg,var(--card),transparent)}
+.rolecard .big{font-size:84px}
+.rolecard.bad{border-color:var(--bad)}
+.blur{filter:blur(9px);user-select:none}
+.note{font-size:14px;background:rgba(0,0,0,.25);border-radius:8px;padding:6px 10px}
+.rest{text-align:center;padding:40px 10px}
+.rest .big{font-size:72px}
+.mut{opacity:.55}
+/* big screen */
+.screen{min-height:100vh;padding:22px 30px 28px;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;justify-content:space-between;align-items:center;font-size:22px}
+.top .tm{font-size:44px}
+.main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;min-height:340px}
+.main .huge{font-size:clamp(46px,7vw,110px);font-weight:900;line-height:1.1}
+.main .sub{font-size:clamp(20px,2.4vw,32px);color:var(--dim)}
+.main .moon{font-size:clamp(90px,14vw,200px);animation:float 4s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-14px)}}
+.pg{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.pc{position:relative;min-width:104px;padding:10px 12px;border-radius:14px;background:var(--card);border:1px solid var(--line);text-align:center}
+.pc .av{font-size:38px}.pc .nm{font-weight:700}.pc.dead{opacity:.35;filter:grayscale(1)}
+.pc .ok{position:absolute;top:4px;right:8px;color:var(--ac2);font-weight:900}
+.pc .rl{font-size:13px;color:var(--ac)}
+.pc.on{outline:3px solid var(--ac);transform:scale(1.08)}
+.bars{width:min(760px,92%);display:flex;flex-direction:column;gap:8px;text-align:left}
+.bar{display:flex;align-items:center;gap:10px;font-size:22px}
+.bar i{display:block;height:26px;border-radius:6px;background:var(--ac);transition:width .8s}
+.qrs{display:flex;gap:30px;flex-wrap:wrap;justify-content:center}
+.qrbox{background:var(--card);border:1px solid var(--line);padding:16px;border-radius:18px;text-align:center}
+.qr{background:#fff;padding:8px;border-radius:10px;display:inline-block;min-width:60px;min-height:60px;color:#000;font-size:11px;max-width:230px;word-break:break-all}
+.room{font-size:56px;font-weight:900;letter-spacing:8px;color:var(--ac)}
+.banner{background:var(--ac);color:#10241a;padding:8px 20px;border-radius:99px;font-weight:800;font-size:22px}
+body.ark .banner{color:#04101f}
+/* drawer */
+#dbtn{position:fixed;right:14px;bottom:14px;z-index:30}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100vw);background:rgba(8,14,12,.96);border-left:1px solid var(--line);z-index:40;padding:16px;overflow:auto;display:flex;flex-direction:column;gap:12px;font-size:15px}
+body.ark .drawer{background:rgba(3,8,22,.97)}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left}
+.field{display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:center}
+/* danmaku & toast */
+#dm{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:20}
+.dmi{position:absolute;white-space:nowrap;font-size:30px;font-weight:700;text-shadow:0 2px 6px #000;animation:fly linear forwards}
+@keyframes fly{from{transform:translateX(100vw)}to{transform:translateX(-120%)}}
+#toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 18px;border-radius:99px;z-index:60;display:none;max-width:90vw;text-align:center}
+.flash{animation:flash 1.2s}
+@keyframes flash{0%{background:var(--ac)}100%{background:transparent}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="dm"></div>
+<div id="toast"></div>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+'use strict';
+/* =====================================================================
+   數位狼人殺・同樂版  Hybrid Werewolf
+   角色：主持人/大螢幕（host）、玩家（player）、觀眾（aud）
+   連線：PeerJS (WebRTC)；主持人頁面為唯一權威狀態
+   ===================================================================== */
+
+/* ------------------------- 主題資料 ------------------------- */
+const TH={
+ forest:{key:'forest',name:'森林魔法村的秘密',grade:'中年級（3–4 年級）',emoji:'🌲',
+  story:'黑夜降臨時，受邪惡巫師咒語影響的大灰狼會潛入村莊，把豐收大祭典的禮物藏起來！找出大灰狼，守護森林。',
+  avatars:['🐰','🐻','🦉','🦊','🐿️','🦌','🦔','🐸','🐱','🐷','🐵','🦝'],
+  roles:{wolf:['黑夜大灰狼','🐺','每晚與同伴一起決定襲擊誰，白天要隱藏身分。'],
+         villager:['熱情村民','🐰','沒有特殊能力，用觀察與推理找出大灰狼。'],
+         seer:['貓頭鷹長老','🦉','每晚可以透視一名玩家是不是大灰狼。'],
+         witch:['魔法藥劑師','🧪','擁有「甦醒草藥」與「迷幻藥水」各一瓶，一晚只能用一瓶。'],
+         hunter:['勇敢護衛犬','🐕','被淘汰時可以飛撲帶走一名玩家（被迷幻藥水影響時除外）。']},
+  camp:{wolf:'大灰狼陣營',good:'村莊陣營'},
+  cards:{peek:['智慧貓頭鷹','🦉','夜間：查看一名玩家的陣營'],
+         save:['甦醒草藥','🌿','夜間：選一名玩家，抵銷今夜的襲擊'],
+         mute:['魔法禁言術','🤐','投票時：指定一人，下一個白天不能發言'],
+         blur:['隱身披風','🧥','投票時：本輪你被投的票數 -2']},
+  heal:'甦醒草藥',poison:'迷幻藥水',
+  t:{night:'夜幕降臨，森林陷入沉睡…',nightSub:'請所有人閉上眼睛，只看自己的手機',peace:'平安夜！大家都醒來了',
+     die:{wolf:n=>n+' 的祭典禮物被藏起來，陷入了沉睡',poison:n=>n+' 喝下迷幻藥水，離開了村莊',shot:n=>n+' 被護衛犬飛撲淘汰',vote:n=>n+' 被大家請出了村莊'},
+     win:{good:'🎉 村莊守住了豐收大祭典！',wolf:'🐺 大灰狼奪走了祭典，森林陷入黑暗…'},
+     dm:'森林精靈',nar:{night:'天黑請閉眼，森林進入夜晚',dawn:'天亮了，請睜開眼睛'},
+     ev:{storm:'⛈️ 暴風雨來襲！今日每人發言時間減半',gift:'🎁 森林精靈送來禮物！一位幸運玩家獲得新卡牌',fog:'🌫️ 濃霧瀰漫！本輪投票只公布結果，不公布票數'},
+     shotName:'飛撲'}},
+ ark:{key:'ark',name:'方舟號：最後的星際叛徒',grade:'高年級（5–6 年級）',emoji:'🚀',
+  story:'西元 2154 年，方舟號遭遇宇宙輻射，部分船員已被「仿生暗影」寄生。在氧氣耗盡前，找出混入其中的假同伴！',
+  avatars:['👨‍🚀','👩‍🚀','🧑‍🔬','🧑‍🔧','🤖','👽','🧑‍✈️','👩‍🔬','🧑‍🚒','🦾','🛰️','🪐'],
+  roles:{wolf:['仿生暗影','👾','每晚與同夥決定寄生誰，白天要偽裝成人類。'],
+         villager:['工程師','🧑‍🔧','沒有特殊能力，用觀察與推理找出寄生者。'],
+         seer:['熱感應掃瞄官','📡','每晚可掃瞄一名船員，檢測是否有基因異常。'],
+         witch:['首席醫療官','💉','擁有「修復納米蟲」與「隔離毒素」各一份，一晚只能用一份。'],
+         hunter:['星際安保隊長','🛡️','被淘汰時可啟動自動防衛，反擊帶走一名玩家（被毒素影響時除外）。']},
+  camp:{wolf:'仿生暗影陣營',good:'人類船員陣營'},
+  cards:{peek:['熱感掃瞄','📡','夜間：查看一名玩家的陣營'],
+         save:['納米修復','🧬','夜間：選一名玩家，抵銷今夜的襲擊'],
+         mute:['訊號干擾','📵','投票時：指定一人，下一個白天不能發言'],
+         blur:['全息偽裝','👤','投票時：本輪你被投的票數 -2']},
+  heal:'修復納米蟲',poison:'隔離毒素',
+  t:{night:'警報：艙內燈光熄滅，進入夜間模式…',nightSub:'所有船員請閉眼，只看自己的終端',peace:'平安夜！所有生命訊號正常',
+     die:{wolf:n=>n+' 遭到寄生，生命訊號消失',poison:n=>n+' 被注入隔離毒素，訊號中斷',shot:n=>n+' 被安保系統反擊淘汰',vote:n=>n+' 被送入隔離艙'},
+     win:{good:'🎉 方舟號成功擺脫寄生者，繼續航向新家園！',wolf:'👾 方舟號被仿生暗影接管…'},
+     dm:'地球總部',nar:{night:'夜間模式啟動，請全員閉眼',dawn:'警報解除，請睜開眼睛'},
+     ev:{storm:'🚨 氧氣洩漏！今日每人發言時間減半',gift:'🔋 備用能源啟動！一位幸運船員獲得新卡牌',fog:'📡 通訊雜訊！本輪投票只公布結果，不公布票數'},
+     shotName:'反擊'}}
+};
+const PHASE_NAME={lobby:'等待加入',reveal:'確認身分',night:'夜晚',dawn:'天亮',talk:'發言',vote:'投票',voteResult:'開票',lastwords:'遺言',hunter:'技能',end:'結束'};
+const ROLE_ORDER=['wolf','villager','seer','witch','hunter'];
+
+/* ------------------------- 工具 ------------------------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rnd=n=>Math.floor(Math.random()*n);
+const pick=a=>a[rnd(a.length)];
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
+const uid=()=>Math.random().toString(36).slice(2,9);
+const now=()=>Date.now();
+
+let mode='menu',peer=null,conn=null,G=null,N=null,V=null,skew=0,myPid=null,roomCode=null,drawerOpen=false,ui={},qrCache={},tickTimer=null,AC=null;
+const params=new URLSearchParams(location.search);
+
+/* ------------------------- 畫面輔助 ------------------------- */
+function setHTML(html){
+  const root=$('#app'); if(root._last===html)return; root._last=html;
+  const ae=document.activeElement; const id=ae&&ae.id,val=ae&&ae.value,ss=ae&&ae.selectionStart;
+  root.innerHTML=html; drawQR();
+  if(id){const e=document.getElementById(id); if(e&&'value' in e){e.value=val; try{e.focus();e.setSelectionRange(ss,ss);}catch(_){}}}
+}
+function drawQR(){
+  document.querySelectorAll('.qr[data-url]').forEach(el=>{
+    const u=el.dataset.url;
+    if(typeof QRCode==='undefined'){el.textContent=u;return;}
+    if(!qrCache[u]){const d=document.createElement('div');new QRCode(d,{text:u,width:200,height:200,correctLevel:QRCode.CorrectLevel.M});qrCache[u]=d;}
+    el.textContent='';el.appendChild(qrCache[u]);
+  });
+}
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast._t);toast._t=setTimeout(()=>e.style.display='none',2600);}
+function floatDM(text,color){
+  const d=document.createElement('div');d.className='dmi';d.textContent=text;
+  d.style.top=(8+rnd(60))+'vh';d.style.color=color||'#fff';d.style.animationDuration=(9+rnd(5))+'s';
+  $('#dm').appendChild(d);setTimeout(()=>d.remove(),15000);
+}
+function beep(f,d){
+  if(!G||!G.settings.sound)return;
+  try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+(d||.18));}catch(e){}
+}
+function narrate(t){
+  if(!G||!G.settings.narrate||typeof speechSynthesis==='undefined')return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='zh-TW';u.rate=.95;speechSynthesis.speak(u);}catch(e){}
+}
+function updateTimers(){
+  if(!V)return;
+  const rem=V.paused&&V.remain!=null?V.remain:(V.deadline?V.deadline-(now()+skew):null);
+  const s=rem==null?'':Math.max(0,Math.ceil(rem/1000));
+  document.querySelectorAll('.tm').forEach(e=>{e.textContent=s===''?'':(s+(V.paused?' ⏸':''));e.classList.toggle('low',s!==''&&s<=5);});
+}
+setInterval(()=>{try{updateTimers();}catch(e){}},250);
+
+/* =====================================================================
+   HOST：遊戲狀態與規則引擎
+   ===================================================================== */
+function newGame(code,keep){
+  G={room:code,theme:keep?keep.theme:'forest',phase:'lobby',round:0,players:keep?keep.players:[],aud:keep?keep.aud:[],
+     settings:keep?keep.settings:{talkSec:45,nightSec:25,voteSec:30,lastSec:20,reveal:false,edge:false,autoEvent:true,narrate:true,sound:true},
+     deadline:0,onTimeout:null,paused:false,remain:0,botT:{},potions:{heal:true,poison:true},wolfLog:[],
+     speakerQ:[],speaker:null,speakerMuted:false,dawn:null,vote:null,voteRes:null,audBless:{},event:null,talkMul:1,fog:false,
+     hunterQueue:[],hunterNow:null,hunterResult:null,hunterCont:null,lastId:null,winner:null};
+  N=null;
+}
+const byId=id=>G.players.find(p=>p.id===id);
+const alive=()=>G.players.filter(p=>p.alive);
+function uniqueName(n){let x=n,i=2;while(G.players.some(p=>p.name===x))x=n+i++;return x;}
+function addPlayer(name,bot){
+  const p={id:uid(),name,bot:!!bot,alive:true,role:null,cards:[],notes:[],online:!bot,conn:null,shield:false,muteNext:false,mutedToday:false,deathCause:null};
+  G.players.push(p);return p;
+}
+function setTimer(sec,fn){G.deadline=now()+sec*1000;G.onTimeout=fn;G.botT={};G.paused=false;}
+function clearTimer(){G.deadline=0;G.onTimeout=null;}
+function finishEarly(){const f=G.onTimeout;G.deadline=0;G.onTimeout=null;if(f)f();}
+function go(phase){G.phase=phase;document.body.className=G.theme+' ph-'+phase;}
+function botDue(k,a,b){const t=now();if(!(k in G.botT)){G.botT[k]=t+a+rnd(Math.max(1,b-a));return false;}return t>=G.botT[k];}
+function drawCard(){return pick(['peek','save','mute','mute','blur','blur']);}
+function dealCard(p){if(p.cards.length<4){const c=drawCard();p.cards.push(c);return c;}return null;}
+function roleSet(n){
+  const wolf=n>=12?4:n>=9?3:2;const r=[];for(let i=0;i<wolf;i++)r.push('wolf');
+  r.push('seer','witch');if(n>=7)r.push('hunter');while(r.length<n)r.push('villager');return shuffle(r);
+}
+function checkWin(){
+  const al=alive();const w=al.filter(p=>p.role==='wolf').length;const g=al.length-w;
+  if(w===0)return 'good';
+  if(w>=g)return 'wolf';
+  if(G.settings.edge&&!al.some(p=>['seer','witch','hunter'].includes(p.role)))return 'wolf';
+  return null;
+}
+
+function startGame(){
+  if(G.players.length<6){toast('至少需要 6 位玩家（可用機器人補滿）');return;}
+  const roles=roleSet(G.players.length);
+  G.players.forEach((p,i)=>{p.role=roles[i];p.alive=true;p.cards=[drawCard()];p.notes=[];p.shield=false;p.muteNext=false;p.mutedToday=false;p.deathCause=null;});
+  G.potions={heal:true,poison:true};G.round=0;G.winner=null;G.wolfLog=[];G.hunterQueue=[];G.event=null;G.voteRes=null;G.dawn=null;
+  go('reveal');setTimer(15,startNight);push();narrate('身分已發放，請查看手機');beep(520);
+}
+function startNight(){
+  G.round++;G.event=null;G.talkMul=1;G.fog=false;G.voteRes=null;G.dawn=null;G.vote=null;G.speaker=null;G.hunterResult=null;
+  if(G.round>1&&G.round%2===1)alive().forEach(p=>{const c=dealCard(p);if(c)p.notes.push('獲得新卡牌：'+TH[G.theme].cards[c][0]);});
+  N={step:'wolf',wolfVotes:{},wolfTarget:null,saved:[],poisoned:null,done:{},minUntil:0};
+  go('night');setTimer(G.settings.nightSec,endWolfStep);push();narrate(TH[G.theme].t.nar.night);beep(220,.4);
+}
+function endWolfStep(){
+  const c={};Object.entries(N.wolfVotes).forEach(([vid,t])=>{const v=byId(vid);if(v&&v.alive)c[t]=(c[t]||0)+1;});
+  const max=Math.max(0,...Object.values(c));
+  N.wolfTarget=max?pick(Object.keys(c).filter(k=>c[k]===max)):null;
+  N.step='act';N.minUntil=now()+6000;
+  if(!G.potions.heal&&!G.potions.poison){const w=G.players.find(p=>p.role==='witch');if(w)N.done[w.id+':witch']=true;}
+  setTimer(G.settings.nightSec,resolveNight);push();
+}
+function resolveNight(){
+  const deaths=[];
+  if(N.wolfTarget){const p=byId(N.wolfTarget);if(p&&p.alive&&!N.saved.includes(p.id))deaths.push({id:p.id,cause:'wolf'});}
+  if(N.poisoned){const p=byId(N.poisoned);if(p&&p.alive){const d=deaths.find(x=>x.id===p.id);if(d)d.cause='poison';else deaths.push({id:p.id,cause:'poison'});}}
+  eliminate(deaths);
+  G.dawn={deaths:deaths.map(d=>({id:d.id,name:byId(d.id).name,cause:d.cause}))};
+  go('dawn');setTimer(9,()=>afterDeaths(startTalk));push();
+  narrate(TH[G.theme].t.nar.dawn+'。'+(deaths.length?G.dawn.deaths.map(d=>TH[G.theme].t.die[d.cause](d.name)).join('。'):TH[G.theme].t.peace));beep(880,.3);
+}
+function eliminate(list){
+  list.forEach(d=>{const p=byId(d.id);if(!p||!p.alive)return;p.alive=false;p.deathCause=d.cause;
+    if(p.role==='hunter'&&d.cause!=='poison')G.hunterQueue.push(p.id);});
+}
+function afterDeaths(cont){
+  if(G.hunterQueue.length){
+    G.hunterNow=G.hunterQueue.shift();G.hunterResult=null;G.hunterCont=cont;
+    go('hunter');setTimer(20,()=>hunterShoot(null));push();return;
+  }
+  const w=checkWin();if(w){endGame(w);return;}
+  cont();
+}
+function hunterShoot(tid){
+  const h=byId(G.hunterNow);const t=tid&&byId(tid);
+  if(t&&t.alive&&t.id!==G.hunterNow){eliminate([{id:t.id,cause:'shot'}]);G.hunterResult={target:t.name,hunter:h.name};}
+  else G.hunterResult={target:null,hunter:h.name};
+  setTimer(6,()=>afterDeaths(G.hunterCont));push();
+}
+function triggerEvent(type){
+  const th=TH[G.theme];
+  if(type==='storm')G.talkMul=.5;
+  if(type==='fog')G.fog=true;
+  if(type==='gift'){const c=shuffle(alive().filter(p=>p.cards.length<4))[0];if(c){const k=dealCard(c);c.notes.push('事件禮物：'+th.cards[k][0]);}}
+  G.event={type,text:th.t.ev[type]};beep(660,.25);push();
+}
+function startTalk(){
+  G.players.forEach(p=>{p.mutedToday=p.muteNext;p.muteNext=false;});
+  const al=alive();const k=(G.round-1)%al.length;G.speakerQ=al.slice(k).concat(al.slice(0,k)).map(p=>p.id);
+  go('talk');
+  if(G.settings.autoEvent&&rnd(100)<35)triggerEvent(pick(['storm','gift','fog']));
+  nextSpeaker();
+}
+function nextSpeaker(){
+  if(!G.speakerQ.length){startVote();return;}
+  const id=G.speakerQ.shift();G.speaker=id;const p=byId(id);
+  if(p.mutedToday){G.speakerMuted=true;setTimer(3,nextSpeaker);}
+  else{G.speakerMuted=false;setTimer(Math.round(G.settings.talkSec*G.talkMul),nextSpeaker);}
+  push();beep(700,.12);
+}
+function startVote(){
+  G.speaker=null;G.vote={votes:{},blur:{},log:[],quick:false};G.audBless={};
+  go('vote');setTimer(G.settings.voteSec,resolveVote);push();narrate('開始投票');beep(600,.3);
+}
+function resolveVote(){
+  // 觀眾天神投票
+  const bc={};Object.values(G.audBless).forEach(t=>{bc[t]=(bc[t]||0)+1;});
+  const bmax=Math.max(0,...Object.values(bc));
+  if(bmax){const bid=pick(Object.keys(bc).filter(k=>bc[k]===bmax));const bp=byId(bid);if(bp&&bp.alive){bp.shield=true;G.vote.log.push('觀眾守護了 '+bp.name+'（獲得防禦盾）');}}
+  const counts={};
+  Object.entries(G.vote.votes).forEach(([vid,t])=>{const v=byId(vid);if(v&&v.alive&&t!=='skip'){const q=byId(t);if(q&&q.alive)counts[t]=(counts[t]||0)+1;}});
+  Object.keys(G.vote.blur).forEach(id=>{if(counts[id]!==undefined)counts[id]=Math.max(0,counts[id]-2);});
+  const max=Math.max(0,...Object.values(counts));
+  const tops=max?Object.keys(counts).filter(k=>counts[k]===max):[];
+  let outcome='none',name=null;
+  if(tops.length===1){
+    const t=byId(tops[0]);name=t.name;
+    if(t.shield){t.shield=false;outcome='shield';}
+    else{outcome='out';eliminate([{id:t.id,cause:'vote'}]);G.lastId=t.id;}
+  }else if(tops.length>1)outcome='tie';
+  G.voteRes={outcome,name,counts:G.fog?null:Object.entries(counts).map(([id,n])=>({id,name:byId(id).name,n})).sort((a,b)=>b.n-a.n),fog:G.fog};
+  go('voteResult');setTimer(10,()=>{
+    if(outcome==='out'){go('lastwords');setTimer(G.settings.lastSec,()=>afterDeaths(startNight));push();}
+    else afterDeaths(startNight);
+  });push();beep(440,.3);
+}
+function endGame(w){
+  G.winner=w;clearTimer();go('end');push();narrate(TH[G.theme].t.win[w].replace(/[^\u4e00-\u9fa5，。！、a-zA-Z0-9]/g,''));beep(w==='good'?988:196,.6);
+}
+function resetToLobby(){
+  G.players=G.players.filter(p=>!p.bot||true);
+  G.players.forEach(p=>{p.role=null;p.alive=true;p.cards=[];p.notes=[];p.shield=false;});
+  const keep={theme:G.theme,players:G.players,aud:G.aud,settings:G.settings};
+  newGame(G.room,keep);go('lobby');push();
+}
+
+/* ---------- 玩家需要完成的動作（asks） ---------- */
+function asksFor(p){
+  const a=[];
+  if(G.phase==='night'&&p.alive&&N){
+    const al=alive();
+    if(N.step==='wolf'&&p.role==='wolf'){
+      const votes={};al.filter(q=>q.role==='wolf').forEach(q=>{if(N.wolfVotes[q.id])votes[q.id]=N.wolfVotes[q.id];});
+      a.push({type:'wolf',targets:al.filter(q=>q.role!=='wolf').map(q=>q.id),mine:N.wolfVotes[p.id]||null,votes,done:!!N.done[p.id+':wolf']});
+    }
+    if(N.step==='act'){
+      if(p.role==='seer')a.push({type:'seer',targets:al.filter(q=>q.id!==p.id).map(q=>q.id),done:!!N.done[p.id+':seer']});
+      if(p.role==='witch'){const v=N.wolfTarget?byId(N.wolfTarget):null;
+        a.push({type:'witch',victim:v?v.id:null,victimName:v?v.name:null,heal:G.potions.heal,poison:G.potions.poison,targets:al.filter(q=>q.id!==p.id).map(q=>q.id),done:!!N.done[p.id+':witch']});}
+      const nc=p.cards.filter(c=>c==='peek'||c==='save');
+      if(nc.length)a.push({type:'card',cards:nc,targets:al.map(q=>q.id),done:!!N.done[p.id+':card']});
+    }
+  }
+  if(G.phase==='hunter'&&G.hunterNow===p.id&&!G.hunterResult)a.push({type:'hunter',targets:alive().filter(q=>q.id!==p.id).map(q=>q.id),done:false});
+  if(G.phase==='vote'&&p.alive&&G.vote){
+    a.push({type:'vote',mine:G.vote.votes[p.id]||null,targets:alive().filter(q=>q.id!==p.id).map(q=>q.id),
+      cards:p.cards.filter(c=>c==='mute'||c==='blur'),blurOn:!!G.vote.blur[p.id],done:!!G.vote.votes[p.id]});
+  }
+  return a;
+}
+function pendingNight(){
+  let n=0;G.players.forEach(p=>{if(!p.alive)return;asksFor(p).forEach(a=>{if(!a.done&&(p.bot||p.online))n++;});});return n;
+}
+
+/* ---------- 視圖（送給大螢幕/玩家/觀眾） ---------- */
+function viewFor(p,isAud){
+  const v={t:'state',now:now(),theme:G.theme,phase:G.phase,round:G.round,deadline:G.deadline,paused:G.paused,remain:G.paused?G.remain:null,
+    players:G.players.map(q=>({id:q.id,name:q.name,alive:q.alive,shield:q.shield,online:q.online,bot:q.bot,
+      role:(G.phase==='end'||(!q.alive&&G.settings.reveal))?q.role:null,cause:q.deathCause})),
+    speaker:G.speaker,speakerMuted:G.speakerMuted,speakerQ:G.speakerQ,dawn:G.dawn,voteRes:G.voteRes,event:G.event,lastId:G.lastId,
+    hunterNow:G.hunterNow,hunterResult:G.hunterResult,winner:G.winner,
+    votedIds:G.vote?Object.keys(G.vote.votes):[],cardLog:G.vote?G.vote.log:[],audCount:G.aud.filter(a=>a.conn).length,blessN:Object.keys(G.audBless).length,
+    room:G.room};
+  if(isAud){v.aud=true;v.me=null;v.myBless=G.audBless[p.id]||null;return v;}
+  const wolves=G.players.filter(q=>q.role==='wolf');
+  v.me={id:p.id,name:p.name,role:p.role,alive:p.alive,cards:p.cards,notes:p.notes,muted:p.mutedToday,muteNext:p.muteNext,shield:p.shield,
+    team:p.role==='wolf'?wolves.map(q=>({id:q.id,name:q.name,alive:q.alive})):null,wolfLog:p.role==='wolf'?G.wolfLog.slice(-12):null};
+  v.asks=asksFor(p);
+  return v;
+}
+function push(){
+  if(!G)return;
+  G.players.forEach(p=>{if(p.conn&&p.conn.open)try{p.conn.send(viewFor(p));}catch(e){}});
+  G.aud.forEach(a=>{if(a.conn&&a.conn.open)try{a.conn.send(viewFor(a,true));}catch(e){}});
+  if(mode==='host')renderHost();
+}
+const sendTo=(p,m)=>{if(p.conn&&p.conn.open)try{p.conn.send(m);}catch(e){}};
+
+/* ---------- 處理來自玩家的訊息 ---------- */
+function onPlayerMsg(p,m){
+  if(m.t==='act')doAct(p,m);
+  else if(m.t==='chat')chat(p,m.text,false);
+  else if(m.t==='wolfchat'&&p.role==='wolf'&&p.alive&&G.phase==='night'){
+    const t=String(m.text||'').trim().slice(0,20);if(!t)return;G.wolfLog.push({r:G.round,from:p.name,text:t});push();
+  }
+}
+function onAudMsg(a,m){
+  if(m.t==='chat')chat(a,m.text,true);
+  else if(m.t==='bless'&&G.phase==='vote'){const t=byId(m.target);if(t&&t.alive){G.audBless[a.id]=t.id;push();}}
+}
+function chat(p,text,isAud){
+  text=String(text||'').trim().slice(0,40);if(!text)return;
+  const t=now();if(p.lastChat&&t-p.lastChat<2500)return;
+  if(!isAud&&p.alive&&G.phase!=='lobby'&&G.phase!=='end')return;
+  p.lastChat=t;floatDM((isAud?'':'💀 ')+p.name+'：'+text,isAud?'#ffe27a':'#ff9aa8');
+}
+function doAct(p,m){
+  if(G.paused)return sendTo(p,{t:'toast',text:'遊戲暫停中'});
+  const ty=m.type;const th=TH[G.theme];const al=id=>{const q=byId(id);return q&&q.alive?q:null;};
+  if(G.phase==='night'&&p.alive&&N){
+    const key=p.id+':'+ty;
+    if(ty==='wolf'&&N.step==='wolf'&&p.role==='wolf'){
+      const t=al(m.target);if(!t||t.role==='wolf')return;N.wolfVotes[p.id]=t.id;N.done[key]=true;
+    }else if(ty==='seer'&&N.step==='act'&&p.role==='seer'&&!N.done[key]){
+      const t=al(m.target);if(!t||t.id===p.id)return;N.done[key]=true;
+      const msg='第'+G.round+'夜查驗：'+t.name+' 是 '+(t.role==='wolf'?th.camp.wolf:th.camp.good);p.notes.push(msg);sendTo(p,{t:'toast',text:msg});
+    }else if(ty==='witch'&&N.step==='act'&&p.role==='witch'&&!N.done[key]){
+      if(m.mode==='heal'){if(!G.potions.heal||!N.wolfTarget)return;N.saved.push(N.wolfTarget);G.potions.heal=false;p.notes.push('第'+G.round+'夜使用了'+th.heal);}
+      else if(m.mode==='poison'){const t=al(m.target);if(!G.potions.poison||!t||t.id===p.id)return;N.poisoned=t.id;G.potions.poison=false;p.notes.push('第'+G.round+'夜對 '+t.name+' 使用了'+th.poison);}
+      N.done[key]=true;
+    }else if(ty==='card'&&N.step==='act'&&!N.done[key]){
+      if(m.skip){N.done[key]=true;}
+      else{
+        const c=m.card;if(!['peek','save'].includes(c)||!p.cards.includes(c))return;const t=al(m.target);if(!t)return;
+        p.cards.splice(p.cards.indexOf(c),1);N.done[key]=true;
+        if(c==='peek'){const msg='第'+G.round+'夜['+th.cards.peek[0]+']：'+t.name+' 是 '+(t.role==='wolf'?th.camp.wolf:th.camp.good);p.notes.push(msg);sendTo(p,{t:'toast',text:msg});}
+        else{N.saved.push(t.id);p.notes.push('第'+G.round+'夜使用['+th.cards.save[0]+']保護了 '+t.name);}
+      }
+    }else return;
+    push();return;
+  }
+  if(G.phase==='hunter'&&ty==='hunter'&&G.hunterNow===p.id&&!G.hunterResult){hunterShoot(m.target);return;}
+  if(G.phase==='vote'&&p.alive&&G.vote){
+    if(ty==='vote'){
+      if(m.target==='skip'||(al(m.target)&&m.target!==p.id)){G.vote.votes[p.id]=m.target;
+        if(!G.vote.quick&&alive().every(q=>G.vote.votes[q.id])){G.vote.quick=true;if(G.deadline-now()>5000)G.deadline=now()+5000;}
+        push();}
+    }else if(ty==='playcard'){
+      const c=m.card;if(!['mute','blur'].includes(c)||!p.cards.includes(c))return;
+      if(c==='mute'){const t=al(m.target);if(!t||t.id===p.id)return;t.muteNext=true;G.vote.log.push('有人使用了 '+th.cards.mute[0]+'，'+t.name+' 下一個白天將被禁言');}
+      else{if(G.vote.blur[p.id])return;G.vote.blur[p.id]=true;G.vote.log.push('有人使用了 '+th.cards.blur[0]);}
+      p.cards.splice(p.cards.indexOf(c),1);push();
+    }
+  }
+}
+
+/* ---------- 機器人 ---------- */
+function botTurn(){
+  const al=alive();
+  if(G.phase==='night'&&N){
+    al.filter(p=>p.bot).forEach(p=>asksFor(p).forEach(a=>{
+      if(a.done||!botDue(p.id+a.type+N.step,1500,6000))return;
+      if(a.type==='wolf')doAct(p,{type:'wolf',target:pick(a.targets)});
+      else if(a.type==='seer')doAct(p,{type:'seer',target:pick(a.targets)});
+      else if(a.type==='witch'){
+        if(a.victim&&a.heal&&rnd(100)<60)doAct(p,{type:'witch',mode:'heal'});
+        else if(a.poison&&rnd(100)<15)doAct(p,{type:'witch',mode:'poison',target:pick(a.targets)});
+        else doAct(p,{type:'witch',mode:'pass'});
+      }else if(a.type==='card'){
+        if(rnd(100)<50)doAct(p,{type:'card',card:pick(a.cards),target:pick(a.targets)});else doAct(p,{type:'card',skip:true});
+      }
+    }));
+  }else if(G.phase==='vote'&&G.vote){
+    al.filter(p=>p.bot).forEach(p=>{
+      if(G.vote.votes[p.id]||!botDue(p.id+'v',2000,12000))return;
+      const a=asksFor(p).find(x=>x.type==='vote');if(!a)return;
+      if(a.cards.includes('blur')&&rnd(100)<40)doAct(p,{type:'playcard',card:'blur'});
+      if(a.cards.includes('mute')&&rnd(100)<30)doAct(p,{type:'playcard',card:'mute',target:pick(a.targets)});
+      let ts=a.targets;if(p.role==='wolf'&&rnd(100)<85)ts=ts.filter(id=>byId(id).role!=='wolf');
+      doAct(p,{type:'vote',target:rnd(100)<8?'skip':pick(ts.length?ts:a.targets)});
+    });
+  }else if(G.phase==='hunter'&&!G.hunterResult){
+    const h=byId(G.hunterNow);if(h&&h.bot&&botDue('h',2000,6000))hunterShoot(pick(alive().filter(q=>q.id!==h.id)).id);
+  }else if(G.phase==='talk'){
+    const s=byId(G.speaker);if(s&&s.bot&&botDue('s'+s.id,3000,6000))finishEarly();
+  }else if(G.phase==='lastwords'){
+    const s=byId(G.lastId);if(s&&s.bot&&botDue('l',3000,5000))finishEarly();
+  }
+}
+function tick(){
+  if(!G||mode!=='host'||G.paused)return;
+  if(G.deadline&&now()>=G.deadline){finishEarly();return;}
+  botTurn();
+  if(G.phase==='night'&&N&&G.deadline&&pendingNight()===0&&(N.step==='wolf'||now()>=N.minUntil)){finishEarly();}
+}
+
+/* =====================================================================
+   HOST：連線與畫面
+   ===================================================================== */
+function startHost(){
+  mode='host';roomCode=String(1000+rnd(9000));
+  $('#app').innerHTML='<div class="wrap"><h2>建立房間中…</h2></div>';
+  peer=new Peer('tgww-'+roomCode);
+  peer.on('open',()=>{newGame(roomCode);go('lobby');if(!tickTimer)tickTimer=setInterval(tick,300);renderHost();});
+  peer.on('error',e=>{if(e.type==='unavailable-id'){try{peer.destroy();}catch(_){}startHost();}else toast('連線服務錯誤：'+e.type);});
+  peer.on('connection',hostConn);
+}
+function hostConn(c){
+  let pid=null,kind=null;
+  c.on('data',m=>{
+    if(!m||typeof m!=='object')return;
+    if(m.t==='hello'){
+      const name=String(m.name||'').trim().slice(0,8)||'玩家';
+      if(m.aud){
+        let a=m.pid&&G.aud.find(x=>x.id===m.pid);if(!a){a={id:uid(),name,lastChat:0};G.aud.push(a);}
+        a.conn=c;pid=a.id;kind='aud';c.send({t:'welcome',pid:a.id,kind:'aud'});c.send(viewFor(a,true));if(mode==='host')renderHost();return;
+      }
+      let p=m.pid&&G.players.find(x=>x.id===m.pid);
+      if(p){p.conn=c;p.online=true;}
+      else if(G.phase==='lobby'&&G.players.length<12){p=addPlayer(uniqueName(name));p.conn=c;}
+      else{c.send({t:'err',text:G.phase==='lobby'?'房間已滿（最多 12 人）':'遊戲已開始，請改用「觀眾」身分加入'});return;}
+      pid=p.id;kind='p';c.send({t:'welcome',pid:p.id,kind:'p'});push();return;
+    }
+    if(!pid)return;
+    if(kind==='p'){const p=byId(pid);if(p)onPlayerMsg(p,m);}
+    else{const a=G.aud.find(x=>x.id===pid);if(a)onAudMsg(a,m);}
+  });
+  c.on('close',()=>{
+    if(kind==='p'){const p=byId(pid);if(p&&p.conn===c){p.online=false;p.conn=null;push();}}
+    else if(kind==='aud'){const a=G.aud.find(x=>x.id===pid);if(a&&a.conn===c){a.conn=null;}}
+  });
+}
+const joinUrl=(aud)=>{const base=location.href.split('?')[0].split('#')[0];return base+'?room='+roomCode+(aud?'&aud=1':'');};
+
+/* --- H：主持人按鈕處理 --- */
+const H={
+  drawer(){drawerOpen=!drawerOpen;renderHost();},
+  theme(k){G.theme=k;push();},
+  set(k,val){G.settings[k]=val;push();},
+  num(k,val){G.settings[k]=Math.max(5,Math.min(300,+val||30));push();},
+  bot(n){
+    const names=shuffle(TH[G.theme].avatars.map((a,i)=>a+['小米','阿寶','豆豆','妮妮','皮皮','阿福','咪咪','布丁','球球','嘟嘟','歐歐','茶茶'][i]));
+    for(let i=0;i<n&&G.players.length<12;i++){let nm=names[i%names.length];nm=uniqueName(nm);addPlayer(nm,true);}
+    push();
+  },
+  fill(n){H.bot(Math.max(0,n-G.players.length));},
+  kick(id){G.players=G.players.filter(p=>{if(p.id===id){if(p.conn)try{p.conn.send({t:'err',text:'你已被主持人移出房間'});}catch(e){}return false;}return true;});push();},
+  start(){startGame();},
+  pause(){
+    if(!G.deadline&&!G.paused)return;
+    if(!G.paused){G.remain=Math.max(0,G.deadline-now());G.paused=true;}
+    else{G.deadline=now()+G.remain;G.paused=false;}
+    push();
+  },
+  skip(){if(G.onTimeout&&!G.paused)finishEarly();},
+  event(t){triggerEvent(t);},
+  again(){resetToLobby();},
+  say(){const e=document.getElementById('hmsg');if(e&&e.value.trim()){floatDM(TH[G.theme].t.dm+'：'+e.value.trim().slice(0,40),'#9fffd0');e.value='';}}
+};
+
+function avatarOf(v,id){const i=v.players.findIndex(p=>p.id===id);return TH[v.theme].avatars[(i<0?0:i)%12];}
+function roleTag(v,r){const x=TH[v.theme].roles[r];return x[1]+' '+x[0];}
+function pgrid(v,o){
+  o=o||{};
+  return '<div class="pg">'+v.players.map((q,i)=>
+    '<div class="pc '+(q.alive?'':'dead')+(o.on===q.id?' on':'')+'"><div class="av">'+(q.alive?TH[v.theme].avatars[i%12]:'💀')+'</div><div class="nm">'+esc(q.name)+(q.shield?' 🛡️':'')+'</div>'
+    +(q.role?'<div class="rl">'+roleTag(v,q.role)+'</div>':'')
+    +(o.votes&&q.alive&&v.votedIds.includes(q.id)?'<div class="ok">✔</div>':'')
+    +(o.online&&!q.bot&&!q.online?'<div class="dim" style="font-size:12px">離線</div>':'')
+    +(o.online&&q.bot?'<div class="dim" style="font-size:12px">🤖</div>':'')+'</div>').join('')+'</div>';
+}
+function screenHTML(v){
+  const th=TH[v.theme];const al=v.players.filter(p=>p.alive).length;let main='';const nm=id=>{const p=v.players.find(x=>x.id===id);return p?esc(p.name):'';};
+  const evb=v.event&&['talk','vote','voteResult'].includes(v.phase)?'<div class="banner">'+esc(v.event.text)+'</div>':'';
+  if(v.phase==='lobby'){
+    main='<div class="huge">'+th.emoji+' '+esc(th.name)+'</div><div class="sub">'+esc(th.grade)+'　'+esc(th.story)+'</div>'
+      +'<div class="qrs"><div class="qrbox"><h3>📱 玩家掃碼加入</h3><div class="qr" data-url="'+esc(joinUrl(false))+'"></div></div>'
+      +'<div class="qrbox"><h3>👀 觀眾掃碼（彈幕）</h3><div class="qr" data-url="'+esc(joinUrl(true))+'"></div></div></div>'
+      +'<div>房號 <span class="room">'+v.room+'</span></div>'
+      +(location.protocol==='file:'?'<div class="banner" style="background:#ff7a7a;color:#fff">⚠️ 目前是本機檔案，手機無法連線；請先上傳到 GitHub Pages 再開房</div>':'')
+      +pgrid(v,{online:true})+'<div class="sub">已加入 '+v.players.length+' / 12 人　👀 觀眾 '+v.audCount+' 人（按右下角「🎛 主控台」開始遊戲）</div>';
+  }else if(v.phase==='reveal'){
+    main='<div class="moon">🎴</div><div class="huge">請查看手機上的身分牌</div><div class="sub">確認後請勿讓別人看到，遊戲即將開始</div>'+pgrid(v);
+  }else if(v.phase==='night'){
+    main='<div class="moon">'+(v.theme==='ark'?'🛰️':'🌙')+'</div><div class="huge">'+esc(th.t.night)+'</div><div class="sub">'+esc(th.t.nightSub)+'</div><div class="sub">倖存者 '+al+' 人</div>';
+  }else if(v.phase==='dawn'){
+    const ds=v.dawn?v.dawn.deaths:[];
+    main='<div class="moon">☀️</div><div class="huge">'+(ds.length?'昨夜的事件':esc(th.t.peace))+'</div>'
+      +ds.map(d=>'<div class="sub" style="color:var(--tx)">💀 '+esc(th.t.die[d.cause](d.name))+'</div>').join('')+'<div class="sub">倖存者 '+al+' 人</div>'+pgrid(v);
+  }else if(v.phase==='talk'){
+    const q=v.speakerQ.map(nm).join(' → ');
+    main=evb+'<div class="sub">現在發言</div><div class="huge">'+(v.speaker?avatarOf(v,v.speaker)+' '+nm(v.speaker):'')+'</div>'
+      +(v.speakerMuted?'<div class="banner" style="background:var(--bad);color:#fff">🤐 被禁言，跳過發言</div>':'')
+      +'<div class="sub">'+(q?'接下來：'+q:'這是最後一位')+'</div>'+pgrid(v,{on:v.speaker});
+  }else if(v.phase==='vote'){
+    main=evb+'<div class="huge">🗳️ 投票時間</div><div class="sub">在手機上投出你的一票　✔ 表示已投　可使用卡牌干擾</div>'+pgrid(v,{votes:true})
+      +'<div class="sub">🙌 觀眾守護票：'+v.blessN+'　'+(v.cardLog.length?esc(v.cardLog.join('　｜　')):'')+'</div>';
+  }else if(v.phase==='voteResult'){
+    const r=v.voteRes||{};
+    const msg=r.outcome==='out'?th.t.die.vote(esc(r.name)):r.outcome==='shield'?'🛡️ '+esc(r.name)+' 被群眾守護，平安無事':r.outcome==='tie'?'平手！今天沒有人被淘汰':'沒有足夠的票，今天沒有人被淘汰';
+    const mx=r.counts&&r.counts.length?r.counts[0].n:1;
+    main=evb+'<div class="huge">📊 開票結果</div>'
+      +(r.counts?'<div class="bars">'+r.counts.map(c=>'<div class="bar"><span style="width:130px">'+esc(c.name)+'</span><i style="width:'+Math.round(c.n/mx*60)+'%;min-width:12px"></i><b>'+c.n+'</b></div>').join('')+'</div>':'<div class="sub">🌫️ 票數保密</div>')
+      +'<div class="huge" style="font-size:clamp(30px,4.4vw,64px)">'+msg+'</div>'+(v.cardLog.length?'<div class="sub">'+esc(v.cardLog.join('　｜　'))+'</div>':'');
+  }else if(v.phase==='lastwords'){
+    main='<div class="sub">遺言時間</div><div class="huge">'+(v.lastId?avatarOf(v,v.lastId)+' '+nm(v.lastId):'')+'</div><div class="sub">請說出你的最後想法</div>';
+  }else if(v.phase==='hunter'){
+    const r=v.hunterResult;
+    main='<div class="moon">'+(v.theme==='ark'?'🛡️':'🐕')+'</div><div class="huge">'+(r?(r.target?esc(r.hunter)+' '+th.t.shotName+'帶走了 '+esc(r.target):esc(r.hunter)+' 沒有發動技能'):nm(v.hunterNow)+' 倒下前發動技能！')+'</div>';
+  }else if(v.phase==='end'){
+    main='<div class="huge">'+esc(th.t.win[v.winner])+'</div><div class="sub">所有人的真實身分</div>'+pgrid(v);
+  }
+  return '<div class="top"><div>'+th.emoji+' '+esc(th.name)+'　<span class="chip">第 '+v.round+' 輪・'+PHASE_NAME[v.phase]+'</span></div><div>'+(v.room?'房號 '+v.room:'')+'</div><div class="tm"></div></div><div class="main">'+main+'</div>';
+}
+function drawerHTML(){
+  if(!drawerOpen)return '';
+  const th=TH[G.theme];const S=G.settings;const lobby=G.phase==='lobby';
+  const tog=(k,l)=>'<label class="row"><input type="checkbox" '+(S[k]?'checked':'')+' onchange="H.set(\''+k+'\',this.checked)"> '+l+'</label>';
+  let h='<div class="drawer"><div class="hd"><h3>🎛 主持人主控台</h3><button class="btn sec sm" onclick="H.drawer()">收起</button></div>';
+  if(lobby){
+    h+='<div class="panel col"><b>主題</b><div class="row">'+Object.values(TH).map(t=>'<button class="btn sm '+(G.theme===t.key?'':'sec')+'" onclick="H.theme(\''+t.key+'\')">'+t.emoji+' '+t.grade.slice(0,3)+'</button>').join('')+'</div>'
+      +'<div class="dim">'+esc(th.name)+'</div></div>'
+      +'<div class="panel col"><b>玩家（'+G.players.length+'）</b><table>'+G.players.map(p=>'<tr><td>'+esc(p.name)+(p.bot?' 🤖':'')+'</td><td>'+(p.bot||p.online?'在線':'離線')+'</td><td><button class="btn bad sm" onclick="H.kick(\''+p.id+'\')">移除</button></td></tr>').join('')+'</table>'
+      +'<div class="row"><button class="btn sec sm" onclick="H.bot(1)">+1 機器人</button><button class="btn sec sm" onclick="H.bot(3)">+3</button><button class="btn sec sm" onclick="H.fill(8)">補到 8 人</button><button class="btn sec sm" onclick="H.fill(12)">補到 12 人</button></div></div>'
+      +'<div class="panel col"><b>遊戲設定（秒）</b>'
+      +'<div class="field">每人發言<input type="number" value="'+S.talkSec+'" onchange="H.num(\'talkSec\',this.value)"></div>'
+      +'<div class="field">夜間每步驟<input type="number" value="'+S.nightSec+'" onchange="H.num(\'nightSec\',this.value)"></div>'
+      +'<div class="field">投票時間<input type="number" value="'+S.voteSec+'" onchange="H.num(\'voteSec\',this.value)"></div>'
+      +'<div class="field">遺言時間<input type="number" value="'+S.lastSec+'" onchange="H.num(\'lastSec\',this.value)"></div>'
+      +tog('autoEvent','白天自動隨機事件')+tog('reveal','淘汰後公開身分')+tog('edge','屠邊規則（神職全滅＝反派勝）')+tog('narrate','語音旁白')+tog('sound','音效')+'</div>'
+      +'<button class="btn" '+(G.players.length<6?'disabled':'')+' onclick="H.start()">▶ 開始遊戲（需 6–12 人）</button>';
+  }else{
+    h+='<div class="panel col"><div class="row"><span class="chip">第 '+G.round+' 輪・'+PHASE_NAME[G.phase]+'</span><span class="chip tm"></span></div>'
+      +'<div class="row"><button class="btn sec sm" onclick="H.pause()">'+(G.paused?'▶ 繼續':'⏸ 暫停')+'</button><button class="btn sec sm" onclick="H.skip()">⏭ 跳過／提前結束</button></div>'
+      +'<div class="row"><button class="btn sec sm" onclick="H.event(\'storm\')">'+th.t.ev.storm.slice(0,2)+' 發言減半</button><button class="btn sec sm" onclick="H.event(\'gift\')">🎁 送卡</button><button class="btn sec sm" onclick="H.event(\'fog\')">🌫 票數保密</button></div></div>'
+      +'<div class="panel"><b>上帝視角</b><table><tr><th>玩家</th><th>身分</th><th>狀態</th><th>卡牌</th></tr>'
+      +G.players.map(p=>'<tr style="'+(p.alive?'':'opacity:.5')+'"><td>'+esc(p.name)+(p.bot?'🤖':(p.online?'':'📴'))+'</td><td>'+(p.role?th.roles[p.role][1]+th.roles[p.role][0]:'')+'</td><td>'+(p.alive?'存活':'淘汰')+(p.shield?'🛡':'')+'</td><td>'+p.cards.map(c=>th.cards[c][1]).join('')+'</td></tr>').join('')+'</table>'
+      +'<div class="dim" style="margin-top:6px">'+(N&&G.phase==='night'?'夜間步驟：'+(N.step==='wolf'?'大灰狼/寄生者選目標':'神職與卡牌行動')+(N.wolfTarget?'　目標：'+esc(byId(N.wolfTarget).name):''):'')+'</div></div>'
+      +(G.phase==='end'?'<button class="btn" onclick="H.again()">🔄 回到大廳再玩一局</button>':'');
+  }
+  h+='<div class="panel col"><b>對全場廣播彈幕</b><input type="text" id="hmsg" maxlength="40" placeholder="'+th.t.dm+'的話…"><button class="btn sec sm" onclick="H.say()">發送</button></div></div>';
+  return h;
+}
+function renderHost(){
+  V=viewFor({id:'__host'},true);skew=0;
+  document.body.className=V.theme+' ph-'+V.phase;
+  setHTML('<div class="screen">'+screenHTML(V)+'</div><button class="btn" id="dbtn" onclick="H.drawer()">🎛 主控台</button>'+drawerHTML());
+  updateTimers();
+}
+
+/* =====================================================================
+   CLIENT：玩家 / 觀眾
+   ===================================================================== */
+function startClient(room,aud){
+  mode=aud?'aud':'player';roomCode=room;
+  const key='tgww_'+room+(aud?'_a':'');
+  myPid=localStorage.getItem(key+'_pid')||null;
+  const nameKey='tgww_name';
+  setHTML('<div class="wrap"><h2>'+(aud?'👀 觀眾':'📱 玩家')+'加入房間 '+esc(room)+'</h2><div class="panel col"><input type="text" id="nameIn" maxlength="8" placeholder="你的暱稱（最多 8 字）" value="'+esc(localStorage.getItem(nameKey)||'')+'"><button class="btn" onclick="C.join()">加入</button></div><div class="dim" id="cmsg"></div></div>');
+  window._ckey=key;
+  if(myPid&&localStorage.getItem(nameKey)){setTimeout(()=>C.join(true),50);}
+}
+let reconnectTimer=null,joined=false;
+const C={
+  join(auto){
+    const name=((document.getElementById('nameIn')||{}).value||localStorage.getItem('tgww_name')||'').trim();
+    if(!name&&!auto){toast('請輸入暱稱');return;}
+    if(name)localStorage.setItem('tgww_name',name);
+    C.connect(name);
+  },
+  connect(name){
+    const msg=$('#cmsg');if(msg)msg.textContent='連線中…';
+    try{if(peer)peer.destroy();}catch(e){}
+    peer=new Peer();
+    peer.on('open',()=>{
+      conn=peer.connect('tgww-'+roomCode,{reliable:true});
+      conn.on('open',()=>{conn.send({t:'hello',name:name||localStorage.getItem('tgww_name')||'玩家',pid:myPid,aud:mode==='aud'});});
+      conn.on('data',C.onMsg);
+      conn.on('close',C.lost);conn.on('error',C.lost);
+    });
+    peer.on('error',e=>{if(e.type==='peer-unavailable'){const m=$('#cmsg');if(m)m.textContent='找不到這個房間，請確認房號或請主持人重新開房';toast('找不到房間');}else C.lost();});
+    setTimeout(()=>{if(!joined&&conn&&!conn.open){C.lost();}},12000);
+  },
+  lost(){
+    if(!joined)return;joined=false;V=V?Object.assign({},V,{lost:true}):V;C.render();
+    clearTimeout(reconnectTimer);reconnectTimer=setTimeout(()=>C.connect(),3000);
+  },
+  onMsg(m){
+    if(m.t==='welcome'){myPid=m.pid;joined=true;localStorage.setItem(window._ckey+'_pid',m.pid);}
+    else if(m.t==='state'){joined=true;const pv=V;V=m;skew=m.now-now();if(!pv||pv.phase!==m.phase||pv.round!==m.round)ui={};C.render();}
+    else if(m.t==='toast')toast(m.text);
+    else if(m.t==='err'){toast(m.text);const e=$('#cmsg');if(e)e.textContent=m.text;joined=false;}
+  },
+  send(m){if(conn&&conn.open)conn.send(m);},
+  act(type,x){C.send(Object.assign({t:'act',type},x||{}));},
+  set(k,val){ui[k]=val;C.render();},
+  chat(){const e=document.getElementById('dmIn');if(e&&e.value.trim()){C.send({t:'chat',text:e.value.trim()});e.value='';}},
+  wchat(){const e=document.getElementById('wcIn');if(e&&e.value.trim()){C.send({t:'wolfchat',text:e.value.trim()});e.value='';}},
+  bless(id){C.send({t:'bless',target:id});},
+  render(){
+    if(!V){return;}
+    document.body.className=V.theme+' ph-'+V.phase;
+    setHTML(V.aud?audHTML():playerHTML());updateTimers();
+  }
+};
+function chatBox(){return '<div class="panel col"><b>💬 發送彈幕</b><div class="row"><input type="text" id="dmIn" maxlength="40" placeholder="想說什麼？" style="flex:1"><button class="btn sm" onclick="C.chat()">送出</button></div></div>';}
+function nameOf(id){const p=V.players.find(x=>x.id===id);return p?esc(p.name):'';}
+function targetBtns(ids,onclickFn,sel){return '<div class="tgrid">'+ids.map(id=>'<button class="btn sec '+(sel===id?'sel':'')+'" onclick="'+onclickFn(id)+'">'+TH[V.theme].avatars[Math.max(0,V.players.findIndex(p=>p.id===id))%12]+' '+nameOf(id)+'</button>').join('')+'</div>';}
+
+function audHTML(){
+  const th=TH[V.theme];
+  let b='<div class="panel"><div class="hd"><b>'+th.emoji+' '+esc(th.name)+'</b><span class="chip">'+PHASE_NAME[V.phase]+' <span class="tm"></span></span></div><div class="dim">第 '+V.round+' 輪・倖存 '+V.players.filter(p=>p.alive).length+' 人</div></div>';
+  if(V.phase==='vote'){
+    b+='<div class="panel col"><b>🙌 天神投票：把守護盾送給誰？</b><div class="dim">得票最高者獲得一次性防禦盾，可抵擋一次被投出局。</div>'+targetBtns(V.players.filter(p=>p.alive).map(p=>p.id),id=>"C.bless('"+id+"')",V.myBless)+'</div>';
+  }
+  b+=chatBox();
+  return '<div class="wrap">'+(V.lost?'<div class="banner" style="text-align:center">連線中斷，重新連線中…</div>':'')+b+'</div>';
+}
+function playerHTML(){
+  const th=TH[V.theme];const me=V.me;const ph=V.phase;
+  const R=me&&me.role?th.roles[me.role]:null;
+  let b='';
+  const head='<div class="hd"><div><b>'+esc(me.name)+'</b> '+(me.alive?'':'<span class="chip">💀 已淘汰</span>')+'</div><span class="chip">'+PHASE_NAME[ph]+' <span class="tm"></span></span></div>';
+  if(ph==='lobby'){
+    return '<div class="wrap">'+head+'<div class="panel rest"><div class="big">'+th.emoji+'</div><h2>已加入！</h2><div class="dim">請等待主持人開始遊戲<br>目前 '+V.players.length+' 人在房間</div></div></div>';
+  }
+  if(R){
+    const isBad=me.role==='wolf';
+    const hidden=ui.hide!==false&&ph!=='reveal';
+    b+='<div class="rolecard '+(isBad?'bad':'')+'" onclick="C.set(\'hide\','+(hidden?'false':'true')+')"><div class="big '+(hidden?'blur':'')+'">'+R[1]+'</div><h2 class="'+(hidden?'blur':'')+'">'+R[0]+'</h2><div class="'+(hidden?'blur':'')+'" style="margin-top:6px">'+(isBad?th.camp.wolf:th.camp.good)+'</div><div class="dim '+(hidden?'blur':'')+'" style="margin-top:8px">'+R[2]+'</div>'+(ph!=='reveal'?'<div class="dim" style="margin-top:8px;font-size:13px">點一下可'+(hidden?'顯示':'隱藏')+'身分</div>':'')+'</div>';
+    if(me.team&&me.team.length>1)b+='<div class="panel">'+(me.role==='wolf'?'你的同伴：':'')+me.team.filter(t=>t.id!==me.id).map(t=>'<span class="chip" style="'+(t.alive?'':'opacity:.4')+'">'+nameOf(t.id)+'</span>').join(' ')+'</div>';
+  }
+  if(ph==='reveal')b+='<div class="panel dim">確認完畢後請把螢幕朝下，等待遊戲開始。</div>';
+  // 動作面板
+  if(me.alive||ph==='hunter')V.asks.forEach(a=>{b+=askPanel(a);});
+  // 公開資訊
+  if(ph==='night'&&me.alive&&V.asks.length===0)b+='<div class="panel rest"><div class="big">😴</div><h3>請閉上眼睛休息</h3><div class="dim">'+esc(th.t.nightSub)+'</div></div>';
+  if(ph==='dawn'){const ds=V.dawn?V.dawn.deaths:[];b+='<div class="panel col"><h3>☀️ 天亮了</h3>'+(ds.length?ds.map(d=>'<div>💀 '+esc(th.t.die[d.cause](d.name))+'</div>').join(''):'<div>'+esc(th.t.peace)+'</div>')+'</div>';}
+  if(ph==='talk')b+='<div class="panel col"><h3>🎙 發言中：'+(V.speaker?nameOf(V.speaker):'')+'</h3>'+(V.speaker===me.id?(V.speakerMuted?'<div class="banner" style="background:var(--bad);color:#fff;text-align:center">你被禁言了</div>':'<div class="banner" style="text-align:center">輪到你發言！</div>'):'')+(me.muted?'<div class="dim">🤐 今天你被禁言，無法發言。</div>':'')+'<div class="dim">順序：'+V.speakerQ.map(nameOf).join(' → ')+'</div></div>';
+  if(ph==='voteResult'){const r=V.voteRes||{};b+='<div class="panel col"><h3>📊 開票結果</h3>'+(r.counts?r.counts.map(c=>'<div>'+esc(c.name)+'：'+c.n+' 票</div>').join(''):'<div>🌫️ 票數保密</div>')+'<b>'+(r.outcome==='out'?esc(th.t.die.vote(r.name)):r.outcome==='shield'?'🛡️ '+esc(r.name)+' 被群眾守護':r.outcome==='tie'?'平手，沒有人被淘汰':'沒有人被淘汰')+'</b></div>';}
+  if(ph==='lastwords')b+='<div class="panel"><h3>🎤 遺言：'+(V.lastId?nameOf(V.lastId):'')+'</h3></div>';
+  if(ph==='hunter'&&!V.asks.length)b+='<div class="panel"><h3>'+(V.hunterResult?(V.hunterResult.target?esc(V.hunterResult.hunter)+' 帶走了 '+esc(V.hunterResult.target):esc(V.hunterResult.hunter)+' 沒有發動技能'):nameOf(V.hunterNow)+' 正在發動技能…')+'</h3></div>';
+  if(ph==='end'){const w=V.winner;const mine=me.role==='wolf'?'wolf':'good';
+    b+='<div class="panel col"><h2>'+esc(th.t.win[w])+'</h2><div>'+(w===mine?'🏆 你的陣營獲勝！':'你的陣營落敗，下次加油！')+'</div><table>'+V.players.map(p=>'<tr><td>'+esc(p.name)+'</td><td>'+(p.role?roleTag(V,p.role):'')+'</td><td>'+(p.alive?'存活':'淘汰')+'</td></tr>').join('')+'</table></div>';}
+  // 卡牌
+  if(me.cards.length&&ph!=='end')b+='<div class="panel col"><b>🃏 我的卡牌</b>'+me.cards.map(c=>'<div class="note">'+th.cards[c][1]+' <b>'+th.cards[c][0]+'</b>　'+th.cards[c][2]+'</div>').join('')+(me.muteNext?'<div class="dim">⚠️ 你下一個白天將被禁言</div>':'')+'</div>';
+  if(me.notes.length)b+='<div class="panel col"><b>🗒 私密情報</b>'+me.notes.map(n=>'<div class="note">'+esc(n)+'</div>').join('')+'</div>';
+  if(!me.alive&&ph!=='end')b+='<div class="panel dim">你已淘汰，仍可觀戰並發送彈幕。</div>'+chatBox();
+  return '<div class="wrap">'+(V.lost?'<div class="banner" style="text-align:center">連線中斷，重新連線中…</div>':'')+head+b+'</div>';
+}
+function askPanel(a){
+  const th=TH[V.theme];const me=V.me;
+  if(a.type==='wolf'){
+    const cnt={};Object.values(a.votes).forEach(t=>{cnt[t]=(cnt[t]||0)+1;});
+    return '<div class="panel col"><h3>'+th.roles.wolf[1]+' 選擇今晚的襲擊目標</h3>'+targetBtns(a.targets,id=>"C.act('wolf',{target:'"+id+"'})",a.mine)
+      +'<div class="dim">同伴目前的選擇：'+(Object.keys(cnt).length?Object.entries(cnt).map(([t,n])=>nameOf(t)+'×'+n).join('、'):'尚無')+'</div>'
+      +'<div class="note">'+(me.wolfLog&&me.wolfLog.length?me.wolfLog.map(l=>esc(l.from)+'：'+esc(l.text)).join('<br>'):'暗語頻道（只有同伴看得到）')+'</div>'
+      +'<div class="row"><input type="text" id="wcIn" maxlength="20" placeholder="暗語…" style="flex:1"><button class="btn sm" onclick="C.wchat()">送出</button></div></div>';
+  }
+  if(a.type==='seer'){
+    return '<div class="panel col"><h3>'+th.roles.seer[1]+' 今晚要查驗誰？</h3>'+(a.done?'<div class="dim">今晚已查驗，結果見下方情報。</div>':targetBtns(a.targets,id=>"C.act('seer',{target:'"+id+"'})"))+'</div>';
+  }
+  if(a.type==='witch'){
+    if(a.done)return '<div class="panel"><h3>'+th.roles.witch[1]+' 今晚行動完成</h3></div>';
+    let h='<div class="panel col"><h3>'+th.roles.witch[1]+' 藥劑時間</h3><div>'+(a.victim?'今晚被襲擊的是 <b>'+esc(a.victimName)+'</b>':'今晚似乎很平靜…沒有人被襲擊')+'</div>'
+      +'<div class="row"><button class="btn" '+(a.heal&&a.victim?'':'disabled')+' onclick="C.act(\'witch\',{mode:\'heal\'})">💚 使用'+th.heal+(a.heal?'':'（已用）')+'</button>'
+      +'<button class="btn bad" '+(a.poison?'':'disabled')+' onclick="C.set(\'witch\',\'poison\')">☠️ 使用'+th.poison+(a.poison?'':'（已用）')+'</button>'
+      +'<button class="btn sec" onclick="C.act(\'witch\',{mode:\'pass\'})">不使用</button></div>';
+    if(ui.witch==='poison')h+='<div>選擇要對誰使用：</div>'+targetBtns(a.targets,id=>"C.act('witch',{mode:'poison',target:'"+id+"'})");
+    return h+'</div>';
+  }
+  if(a.type==='card'){
+    if(a.done)return '<div class="panel"><h3>🃏 夜間卡牌：已處理</h3></div>';
+    let h='<div class="panel col"><h3>🃏 夜間卡牌（可跳過）</h3><div class="row">'+a.cards.map((c,i)=>'<button class="btn sec '+(ui.card===c?'sel':'')+'" onclick="C.set(\'card\',\''+c+'\')">'+th.cards[c][1]+' '+th.cards[c][0]+'</button>').filter((x,i,arr)=>arr.indexOf(x)===i).join('')+'<button class="btn sec" onclick="C.act(\'card\',{skip:true})">跳過</button></div>';
+    if(ui.card)h+='<div class="dim">'+th.cards[ui.card][2]+'</div>'+targetBtns(a.targets,id=>"C.act('card',{card:'"+ui.card+"',target:'"+id+"'})");
+    return h+'</div>';
+  }
+  if(a.type==='hunter'){
+    return '<div class="panel col"><h3>'+th.roles.hunter[1]+' 你被淘汰了！選擇'+th.t.shotName+'的對象（限時 20 秒）</h3>'+targetBtns(a.targets,id=>"C.act('hunter',{target:'"+id+"'})")+'</div>';
+  }
+  if(a.type==='vote'){
+    let h='<div class="panel col"><h3>🗳️ 投票：你覺得誰是壞人？</h3>'+targetBtns(a.targets,id=>"C.act('vote',{target:'"+id+"'})",a.mine)
+      +'<div class="row"><button class="btn sec '+(a.mine==='skip'?'sel':'')+'" onclick="C.act(\'vote\',{target:\'skip\'})">棄票</button></div><div class="dim">'+(a.mine?'已投票，可在時間內更改。':'尚未投票')+'</div>';
+    if(a.cards.length){
+      h+='<b>投票階段卡牌</b><div class="row">'+a.cards.map(c=>'<button class="btn sec '+(ui.dc===c?'sel':'')+'" onclick="'+(c==='blur'?"C.act('playcard',{card:'blur'})":"C.set('dc','mute')")+'">'+th.cards[c][1]+' '+th.cards[c][0]+'</button>').filter((x,i,arr)=>arr.indexOf(x)===i).join('')+'</div>';
+      if(ui.dc==='mute')h+='<div class="dim">選擇要禁言的人：</div>'+targetBtns(a.targets,id=>"C.act('playcard',{card:'mute',target:'"+id+"'});C.set('dc',null)");
+    }
+    if(a.blurOn)h+='<div class="dim">🧥 本輪你的得票數 -2 已生效</div>';
+    return h+'</div>';
+  }
+  return '';
+}
+
+/* =====================================================================
+   入口選單
+   ===================================================================== */
+function menu(){
+  setHTML('<div class="wrap"><div style="text-align:center;padding:20px 0"><div style="font-size:64px">🐺🚀</div><h1>數位狼人殺</h1><div class="dim">同樂版・1 台大螢幕＋N 支手機＋觀眾彈幕</div></div>'
+    +'<button class="btn" onclick="startHost()">🎬 我是主持人（開房／大螢幕）</button>'
+    +'<div class="panel col"><b>我有房號</b><input type="text" id="roomIn" maxlength="4" inputmode="numeric" placeholder="4 位數房號">'
+    +'<div class="row"><button class="btn sec" onclick="menuJoin(false)">📱 當玩家</button><button class="btn sec" onclick="menuJoin(true)">👀 當觀眾</button></div></div>'
+    +'<div class="dim" style="text-align:center">提示：主持人請用電腦或平板開大螢幕；玩家直接掃大螢幕上的 QR Code。</div></div>');
+}
+function menuJoin(aud){const r=(document.getElementById('roomIn')||{}).value;if(!/^\d{4}$/.test((r||'').trim())){toast('請輸入 4 位數房號');return;}startClient(r.trim(),aud);}
+function boot(){
+  if(params.get('room'))startClient(params.get('room'),params.get('aud')==='1');
+  else menu();
+}
+boot();
+</script>
+</body>
+</html>
