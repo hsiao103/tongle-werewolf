@@ -44,6 +44,12 @@ input[type=text],input[type=number],input[type=password],select{background:rgba(
 .wtc .mailpop button,.wtc .mailpop a{font:inherit;font-size:.9em;padding:.35em .9em;border-radius:999px;border:2px solid var(--ac);background:transparent;color:var(--tx);text-decoration:none;cursor:pointer;line-height:1.2}
 .wtc .mailpop .mgm{background:var(--ac);color:#1b1006;font-weight:700}
 .wtc .mailpop .mapp{border-color:transparent;background:none;text-decoration:underline;opacity:.75}
+.ov{position:fixed;inset:0;z-index:70;overflow:auto;background:radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
+.ov.ark{--bg:#050a1c;--bg2:#10224a;--ac:#4de1ff;--ac2:#a78bff;--tx:#e6f3ff;--dim:#8aa8cf;--card:rgba(77,225,255,.08);--line:rgba(77,225,255,.25);--bad:#ff5577}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.ov ul.rl,.ov ol.rl{padding-left:22px;display:flex;flex-direction:column;gap:6px;line-height:1.55}
+.ov h3{margin-top:4px}
+.ov .rb{line-height:1.6}
 .wrap.wide{max-width:780px}
 .hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;background:var(--card);border:1px solid var(--line);font-size:14px}
@@ -643,7 +649,7 @@ function consoleHTML(){
   const th=TH[G.theme],S=G.settings,lobby=G.phase==='lobby';
   const online=G.players.filter(p=>p.bot||p.online).length;
   const tog=(k,l)=>'<label class="row"><input type="checkbox" '+(S[k]?'checked':'')+' onchange="H.set(\''+k+'\',this.checked)"> '+l+'</label>';
-  let h='<div class="wrap wide"><div class="hd"><h2>🎛 主持人主控台</h2><div class="row"><span class="chip">🔒 私密</span><button class="btn sec sm" onclick="H.lock()">鎖定畫面</button></div></div>'
+  let h='<div class="wrap wide"><div class="hd"><h2>🎛 主持人主控台</h2><div class="row"><span class="chip">🔒 私密</span><button class="btn sec sm" onclick="showRules(\'host\')">📖 規則與指南</button><button class="btn sec sm" onclick="H.lock()">鎖定畫面</button></div></div>'
    +'<div class="panel col"><div class="row"><span class="dim">房號</span><span class="room" style="font-size:38px;letter-spacing:5px">'+G.room+'</span></div>'
    +'<div class="row"><span class="chip">🖥 大螢幕 '+G.screens.filter(c=>c.open).length+'</span><span class="chip">📱 玩家 '+online+'/'+G.players.length+'</span><span class="chip">👀 觀眾 '+G.aud.filter(a=>a.conn).length+'</span></div>'
    +'<div class="note">⚠️ 這個畫面含有所有人的真實身分，請只在自己的裝置使用，<b>不要投影、不要分享螢幕</b>。大螢幕請用另一個裝置開啟下列網址（或在大螢幕裝置選「我是大螢幕」並輸入房號）：</div>'
@@ -752,7 +758,7 @@ function targetBtns(ids,onclickFn,sel){return '<div class="tgrid">'+ids.map(id=>
 
 function audHTML(){
   const th=TH[V.theme];
-  let b='<div class="panel"><div class="hd"><b>'+th.emoji+' '+esc(th.name)+'</b><span class="chip">'+PHASE_NAME[V.phase]+' <span class="tm"></span></span></div><div class="dim">第 '+V.round+' 輪・倖存 '+V.players.filter(p=>p.alive).length+' 人</div></div>';
+  let b='<div class="panel"><div class="hd"><b>'+th.emoji+' '+esc(th.name)+'</b><span class="row"><button class="btn sec sm" onclick="showRules()">📖 規則</button><span class="chip">'+PHASE_NAME[V.phase]+' <span class="tm"></span></span></span></div><div class="dim">第 '+V.round+' 輪・倖存 '+V.players.filter(p=>p.alive).length+' 人</div></div>';
   if(V.phase==='vote'){
     b+='<div class="panel col"><b>🙌 天神投票：把守護盾送給誰？</b><div class="dim">得票最高者獲得一次性防禦盾，可抵擋一次被投出局。</div>'+targetBtns(V.players.filter(p=>p.alive).map(p=>p.id),id=>"C.bless('"+id+"')",V.myBless)+'</div>';
   }
@@ -763,7 +769,7 @@ function playerHTML(){
   const th=TH[V.theme];const me=V.me;const ph=V.phase;
   const R=me&&me.role?th.roles[me.role]:null;
   let b='';
-  const head='<div class="hd"><div><b>'+esc(me.name)+'</b> '+(me.alive?'':'<span class="chip">💀 已淘汰</span>')+'</div><span class="chip">'+PHASE_NAME[ph]+' <span class="tm"></span></span></div>';
+  const head='<div class="hd"><div><b>'+esc(me.name)+'</b> '+(me.alive?'':'<span class="chip">💀 已淘汰</span>')+'</div><span class="row"><button class="btn sec sm" onclick="showRules()">📖 規則</button><span class="chip">'+PHASE_NAME[ph]+' <span class="tm"></span></span></span></div>';
   if(ph==='lobby'){
     return '<div class="wrap">'+head+'<div class="panel rest"><div class="big">'+th.emoji+'</div><h2>已加入！</h2><div class="dim">請等待主持人開始遊戲<br>目前 '+V.players.length+' 人在房間</div></div></div>';
   }
@@ -837,6 +843,76 @@ function askPanel(a){
 /* =====================================================================
    入口選單
    ===================================================================== */
+/* ===== 遊戲規則與說明 ===== */
+let rulesTab='quick',rulesTheme=null;
+const RULE_TABS=[['quick','快速上手'],['roles','角色與人數'],['night','夜晚'],['day','白天與投票'],['cards','卡牌與事件'],['win','勝負'],['host','主持人指南'],['faq','常見問題']];
+function ruleTheme(){return rulesTheme||(G&&G.theme)||(V&&V.theme)||'forest';}
+function rulesBody(tab,k){
+  const th=TH[k],R=th.roles,C=th.cards,cp=th.camp;
+  const ul=a=>'<ul class="rl">'+a.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+  const ol=a=>'<ol class="rl">'+a.map(x=>'<li>'+x+'</li>').join('')+'</ol>';
+  const wolf=R.wolf[0],good=cp.good;
+  if(tab==='quick')return '<h3>'+th.emoji+' '+th.name+'</h3><div class="rb">'+th.story+'</div>'
+    +'<h3>遊戲目標</h3>'+ul(['<b>'+good+'</b>：在被追上之前，投票淘汰所有「'+wolf+'」。','<b>'+cp.wolf+'</b>：白天隱藏身分，夜晚悄悄行動，讓自己的人數追上好人。'])
+    +'<h3>需要的東西</h3>'+ul(['6–12 位玩家，每人一支手機或平板（一人一機）','一台公開大螢幕（投影機或電視）','主持人一台私人裝置（手機或平板）','觀眾不限人數，用手機掃碼就能發彈幕','一局約 30–45 分鐘'])
+    +'<h3>一輪怎麼進行</h3>'+ol(['<b>夜晚</b>：所有人閉眼，只看自己的手機；有能力的角色在手機上行動。','<b>天亮</b>：大螢幕公布昨夜發生的事。','<b>發言</b>：依序輪流發言，說明自己的觀察。','<b>投票</b>：每人在手機上秘密投票，可搭配卡牌干擾。','<b>開票與遺言</b>：票數最高者出局並留下遺言，接著進入下一個夜晚。'])
+    +'<div class="note">只看自己的手機、不偷看別人的螢幕，是這個遊戲最重要的規矩。</div>';
+  if(tab==='roles'){
+    let h='<h3>角色說明</h3>';
+    ROLE_ORDER.forEach(rk=>{h+='<div class="note" style="margin-bottom:8px"><b>'+R[rk][1]+' '+R[rk][0]+'</b>（'+(rk==='wolf'?cp.wolf:good)+'）<br>'+R[rk][2]+'</div>';});
+    h+='<h3>人數與角色配置</h3><table><tr><th>人數</th><th>'+R.wolf[0]+'</th><th>'+R.seer[0]+'</th><th>'+R.witch[0]+'</th><th>'+R.hunter[0]+'</th><th>'+R.villager[0]+'</th></tr>';
+    for(let n=6;n<=12;n++){const w=n>=12?4:n>=9?3:2,hu=n>=7?1:0;h+='<tr><td>'+n+'</td><td>'+w+'</td><td>1</td><td>1</td><td>'+hu+'</td><td>'+(n-w-2-hu)+'</td></tr>';}
+    return h+'</table><div class="dim">身分由系統隨機分配，只有你自己的手機看得到。</div>';
+  }
+  if(tab==='night')return '<h3>夜晚的兩個步驟</h3>'+ol(['<b>'+wolf+'行動</b>：所有存活的'+wolf+'在手機上投票選目標，得票最多者被襲擊；平手時隨機決定。不能選同伴。','<b>神職與卡牌行動</b>：'+R.seer[0]+'、'+R.witch[0]+'，以及持有夜間卡牌的玩家在手機上行動。這一步至少會進行 6 秒，避免有人從結束時間猜出誰有能力。'])
+    +'<h3>各角色夜間能力</h3>'+ul([
+      '<b>'+R.wolf[0]+'</b>：可看到同伴名單，也能在手機上傳短暗語給同伴（限 20 字，只有同伴看得到）。',
+      '<b>'+R.seer[0]+'</b>：每晚查驗一位存活玩家（不含自己），立即得知對方屬於'+good+'或'+cp.wolf+'，結果會留在「私密情報」。',
+      '<b>'+R.witch[0]+'</b>：看得到今晚誰被襲擊。「'+th.heal+'」與「'+th.poison+'」各限用一次，<b>一晚最多用一瓶</b>。'+th.heal+'可救被襲擊者（包含自己）；'+th.poison+'可對任一位其他存活玩家使用。',
+      '<b>'+R.hunter[0]+'</b>：夜間沒有行動。',
+      '<b>'+R.villager[0]+'</b>：沒有行動，手機顯示休息畫面，請閉眼等待。'])
+    +'<h3>夜晚何時結束</h3>'+ul(['每個步驟預設 25 秒，主持人可在設定中調整。','當所有該行動的玩家都完成，會提早進入下一步。','離線的玩家不會讓遊戲卡住，時間到就跳過。'])
+    +'<div class="note">夜間結算：被襲擊的人若沒被救就出局；被'+th.poison+'選中的人一定出局。</div>';
+  if(tab==='day')return '<h3>天亮</h3>'+ul(['大螢幕公布昨夜出局的人，或宣布平安夜。','預設<b>不公開</b>出局者的身分；主持人可以在設定中開啟「淘汰後公開身分」。'])
+    +'<h3>發言</h3>'+ul(['依座位順序輪流發言，每人預設 45 秒；每輪的起點會輪替。','輪到的人名字會在大螢幕亮起，主持人可隨時跳過。','被「'+C.mute[0]+'」封鎖的人，當天會直接跳過發言。'])
+    +'<h3>投票</h3>'+ul(['每位存活玩家在手機上秘密投一票，不能投自己，也可以棄票。','投票時間內可以更改選擇；全員都投完後，會在 5 秒後提早結算。','大螢幕只顯示「誰已投票」，不顯示投給誰。','得票最高且<b>唯一</b>的人出局；平手或沒人得票，今天沒有人出局。','出局者有一段遺言時間（預設 20 秒）。'])
+    +'<h3>'+R.hunter[0]+'的技能</h3>'+ul(['被襲擊或被投票出局時，可在 20 秒內選一位存活玩家一起帶走。','被'+th.poison+'選中出局則不能發動。','超時沒選，視為放棄技能。'])
+    +'<h3>出局之後</h3>'+ul(['出局的玩家不能再發言或行動，但仍可在手機上看到公開資訊，並用彈幕參與。']);
+  if(tab==='cards'){
+    let h='<h3>技能卡牌</h3><table><tr><th>卡牌</th><th>使用時機</th><th>效果</th></tr>'
+      +'<tr><td>'+C.peek[1]+' '+C.peek[0]+'</td><td>夜間</td><td>查看一位玩家的陣營</td></tr>'
+      +'<tr><td>'+C.save[1]+' '+C.save[0]+'</td><td>夜間</td><td>選一位玩家（可選自己），抵銷今夜對他的襲擊；擋不住'+th.poison+'</td></tr>'
+      +'<tr><td>'+C.mute[1]+' '+C.mute[0]+'</td><td>投票時</td><td>指定一人（不含自己），下一個白天不能發言；大螢幕會匿名公布有人使用</td></tr>'
+      +'<tr><td>'+C.blur[1]+' '+C.blur[0]+'</td><td>投票時</td><td>本輪你收到的票數 -2（最低為 0）</td></tr></table>';
+    h+='<h3>怎麼拿到卡牌</h3>'+ul(['開局每人隨機獲得 1 張。','從第 3 夜開始，每隔一夜（第 3、5、7… 夜）每位存活玩家再獲得 1 張。','每人最多同時持有 4 張，用掉就沒有了。','夜間卡牌一晚最多用一張，也可以選擇跳過。']);
+    h+='<h3>觀眾的天神投票</h3>'+ul(['投票階段，觀眾可以選一位玩家送出守護。','得票最高者獲得<b>防禦盾</b>🛡️，名字旁會顯示。','盾牌可以抵擋一次「被投票淘汰」，用掉就消失；擋不住夜間襲擊。','觀眾也可以隨時發彈幕（每 2.5 秒一則、限 40 字）。']);
+    h+='<h3>隨機事件</h3>'+ul([th.t.ev.storm,th.t.ev.gift,th.t.ev.fog,'事件可由系統自動觸發（每天約 35% 機率），主持人也能手動觸發，或在設定中關閉自動事件。']);
+    return h;
+  }
+  if(tab==='win')return '<h3>勝利條件</h3>'+ul(['<b>'+good+'獲勝</b>：所有「'+wolf+'」都被淘汰。','<b>'+cp.wolf+'獲勝</b>：存活的'+wolf+'人數大於或等於其他存活玩家。'])
+    +'<h3>可選規則：屠邊</h3><div class="rb">主持人可在設定中開啟。開啟後，只要'+R.seer[0]+'、'+R.witch[0]+'、'+R.hunter[0]+'全部出局，'+cp.wolf+'就直接獲勝。人數較少時神職只有 2–3 位，開啟會讓遊戲偏向反派。</div>'
+    +'<h3>結局</h3><div class="rb">遊戲結束時，大螢幕與手機都會公布所有人的真實身分。</div>';
+  if(tab==='host')return '<h3>三種裝置，各司其職</h3>'+ul(['<b>私人主控台</b>：你自己的手機或平板，看得到所有人身分並控制遊戲，<b>請勿投影或分享螢幕</b>。','<b>大螢幕</b>：另一台裝置，只顯示公開資訊與彈幕，第一次要按一下「開啟聲音」才會有音效與語音旁白。','<b>玩家與觀眾</b>：掃大螢幕上的 QR Code 加入。'])
+    +'<h3>開局步驟</h3>'+ol(['在首頁按「我是主持人」，取得 4 位數房號。','用另一台裝置開啟大螢幕（複製主控台上的網址，或選「我是大螢幕」輸入房號）。','玩家與觀眾掃大螢幕上的 QR Code 加入，輸入暱稱。','在主控台選主題（中年級：森林魔法村；高年級：方舟號）與時間設定。','人數到 6–12 人後按「開始遊戲」，全班先花 15 秒確認自己的身分。'])
+    +'<h3>進行中的工具</h3>'+ul(['<b>暫停／繼續</b>：計時全部凍結。','<b>跳過／提前結束</b>：略過目前階段的倒數。','<b>觸發事件</b>：隨時加入發言減半、送卡或票數保密。','<b>上帝視角</b>：預設遮住身分，按「顯示身分」看 8 秒後自動遮回。','<b>鎖定畫面</b>：設定 4 位數密碼，旁人看不到內容，遊戲照常進行。','<b>對大螢幕廣播</b>：以'+th.t.dm+'的名義發彈幕。'])
+    +'<h3>人數不夠或想先試玩</h3>'+ul(['在大廳按「補到 8 人」或「+1 機器人」，機器人會自動行動、發言與投票。','機器人適合練習流程，正式遊戲建議全部由真人玩家參加。'])
+    +'<h3>注意事項</h3>'+ul(['<b>主控台頁面不能關閉或重新整理</b>，否則整局會重置；請接上電源並關閉自動休眠。','玩家手機重新整理會自動回到原本的座位。','需要網路；若學校網路擋住 WebRTC，玩家可能連不上，建議開局前先測試。']);
+  if(tab==='faq')return '<h3>常見問題</h3>'+ul(['<b>手機斷線了怎麼辦？</b>重新整理頁面就會自動回到原座位，不用重新輸入。','<b>遊戲開始後才來的人？</b>無法加入玩家，但可以用「觀眾」身分掃碼，一起看並發彈幕。','<b>為什麼我的手機一直顯示休息畫面？</b>你今晚沒有能力可以使用，這是正常的，請閉眼等待天亮。','<b>平票會怎樣？</b>沒有人出局，直接進入下一個夜晚。','<b>被淘汰後還能做什麼？</b>可以繼續觀戰並發彈幕，但不能透露任何人的身分給還在遊戲中的人。','<b>能看到別人的身分嗎？</b>不能。手機只收得到自己的資訊；同伴名單只有'+wolf+'看得到。','<b>聽不到音效與旁白？</b>大螢幕需要先按一下「🔊 點擊開啟聲音與旁白」，並確認裝置沒有靜音。','<b>投票後想改？</b>投票時間結束前都可以改。']);
+  return '';
+}
+function showRules(tab){
+  if(tab)rulesTab=tab;const k=ruleTheme();
+  let o=document.getElementById('rules');if(!o){o=document.createElement('div');o.id='rules';document.body.appendChild(o);}
+  o.className='ov '+k;
+  o.innerHTML='<div class="wrap wide"><div class="hd"><h2>📖 遊戲規則與說明</h2><button class="btn sec sm" onclick="closeRules()">關閉 ✕</button></div>'
+    +'<div class="row"><span class="dim">故事版本：</span>'+Object.values(TH).map(t=>'<button class="btn sm '+(k===t.key?'':'sec')+'" onclick="rulesTheme=\''+t.key+'\';showRules()">'+t.emoji+' '+t.grade.slice(0,3)+'</button>').join('')+'</div>'
+    +'<div class="tabs">'+RULE_TABS.map(t=>'<button class="btn sm '+(rulesTab===t[0]?'':'sec')+'" onclick="showRules(\''+t[0]+'\')">'+t[1]+'</button>').join('')+'</div>'
+    +'<div class="panel col rb">'+rulesBody(rulesTab,k)+'</div><button class="btn sec" onclick="closeRules()">關閉說明</button></div>';
+  o.scrollTop=0;
+}
+function closeRules(){const o=document.getElementById('rules');if(o)o.remove();}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeRules();});
+
 /* ===== 點閱次數（Abacus 免帳號計數服務；同一瀏覽器 30 分鐘內重整只算一次，失敗時隱藏） ===== */
 function viewCount(){
   const el=document.getElementById('vcn'),box=document.getElementById('vc');if(!el)return;
@@ -867,6 +943,7 @@ function menu(){
     +'<button class="btn" onclick="startHost()">🎬 我是主持人（私人主控台）</button>'
     +'<div class="panel col"><b>我有房號</b><input type="text" id="roomIn" maxlength="4" inputmode="numeric" placeholder="4 位數房號">'
     +'<div class="row"><button class="btn sec" onclick="menuJoin(\'player\')">📱 當玩家</button><button class="btn sec" onclick="menuJoin(\'aud\')">👀 當觀眾</button><button class="btn sec" onclick="menuJoin(\'screen\')">🖥 我是大螢幕</button></div></div>'
+    +'<button class="btn sec" onclick="showRules()">📖 遊戲規則與說明</button>'
     +'<div class="dim" style="text-align:center">提示：主持人用自己的手機／平板開「私人主控台」；大螢幕請用另一台裝置開「大螢幕」；玩家掃大螢幕上的 QR Code。</div>'+FOOT+'</div>');
   viewCount();
 }
