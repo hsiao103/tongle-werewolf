@@ -60,6 +60,8 @@ input[type=text],input[type=number],input[type=password],select{background:rgba(
 .rolecard .big{font-size:84px}
 .rolecard .big img{display:block;margin:0 auto;width:min(250px,72%);height:auto;border-radius:18px;box-shadow:0 6px 22px #0008}
 .btnthumb{width:30px;height:auto;vertical-align:middle;border-radius:6px;margin-right:4px}
+.avimg{width:1em;height:1em;vertical-align:-.12em;border-radius:50%}
+.tgrid .avimg{width:26px;height:26px}
 .blur img{filter:blur(20px) saturate(.3) brightness(.7)}
 .cardrow{display:flex;gap:10px;align-items:center}
 .cardthumb{width:56px;height:auto;flex:none;border-radius:10px}
@@ -177,23 +179,40 @@ const TH={
 /* ===== 美術素材對照（集中管理；缺圖時自動退回 emoji）===== */
 const ART={
   forest:{
-    role:{   // 只在「玩家本人」的身分卡出現；公開畫面不得使用。hunter（護衛犬）待補繪，暫用 emoji
+    role:{   // 只在「玩家本人」的身分卡出現；公開畫面不得使用
       wolf:{src:'assets/forest/cards/role-wolf.webp',w:480,h:449},
       villager:{src:'assets/forest/cards/role-villager.webp',w:480,h:450},
       seer:{src:'assets/forest/cards/role-seer.webp',w:480,h:479},
-      witch:{src:'assets/forest/cards/role-witch.webp',w:480,h:480}},
+      witch:{src:'assets/forest/cards/role-witch.webp',w:480,h:480},
+      hunter:{src:'assets/forest/cards/role-hunter.webp',w:296,h:282}},
     card:{   // 技能卡：只顯示在持有者自己的手機
       peek:{src:'assets/forest/cards/skill-peek.webp',w:256,h:251},
       save:{src:'assets/forest/cards/skill-save.webp',w:256,h:251},
       mute:{src:'assets/forest/cards/skill-mute.webp',w:256,h:251},
-      blur:{src:'assets/forest/cards/skill-blur.webp',w:256,h:251}}
+      blur:{src:'assets/forest/cards/skill-blur.webp',w:256,h:251}},
+    avatar:['assets/forest/avatars/av-01.webp','assets/forest/avatars/av-02.webp','assets/forest/avatars/av-03.webp','assets/forest/avatars/av-04.webp','assets/forest/avatars/av-05.webp','assets/forest/avatars/av-06.webp','assets/forest/avatars/av-07.webp','assets/forest/avatars/av-08.webp','assets/forest/avatars/av-09.webp','assets/forest/avatars/av-10.webp','assets/forest/avatars/av-11.webp','assets/forest/avatars/av-12.webp']   // 12 張中性座位頭像（公開投影用，不得含任何角色線索）
   },
-  ark:{role:{},card:{}}   // 方舟版素材尚未提供：留空即全部退回 emoji
+  ark:{
+    role:{   // 只在「玩家本人」的身分卡出現；公開畫面不得使用
+      wolf:{src:'assets/ark/cards/role-wolf.webp',w:265,h:248},
+      villager:{src:'assets/ark/cards/role-villager.webp',w:272,h:247},
+      seer:{src:'assets/ark/cards/role-seer.webp',w:272,h:247},
+      witch:{src:'assets/ark/cards/role-witch.webp',w:272,h:244},
+      hunter:{src:'assets/ark/cards/role-hunter.webp',w:268,h:248}},
+    card:{   // 技能卡：只顯示在持有者自己的手機
+      peek:{src:'assets/ark/cards/skill-peek.webp',w:204,h:180},
+      save:{src:'assets/ark/cards/skill-save.webp',w:200,h:180},
+      mute:{src:'assets/ark/cards/skill-mute.webp',w:200,h:180},
+      blur:{src:'assets/ark/cards/skill-blur.webp',w:204,h:178}},
+    avatar:['assets/ark/avatars/av-01.webp','assets/ark/avatars/av-02.webp','assets/ark/avatars/av-03.webp','assets/ark/avatars/av-04.webp','assets/ark/avatars/av-05.webp','assets/ark/avatars/av-06.webp','assets/ark/avatars/av-07.webp','assets/ark/avatars/av-08.webp','assets/ark/avatars/av-09.webp','assets/ark/avatars/av-10.webp','assets/ark/avatars/av-11.webp','assets/ark/avatars/av-12.webp']   // 12 張中性座位頭像（公開投影用，不得含任何角色線索）
+  }
 };
 function artImg(theme,kind,key,alt,cls,fb){
   const a=ART[theme]&&ART[theme][kind]&&ART[theme][kind][key];if(!a)return fb;
   return '<img src="'+a.src+'" width="'+a.w+'" height="'+a.h+'" alt="'+esc(alt)+'" loading="lazy" decoding="async"'+(cls?' class="'+cls+'"':'')+' data-fb="'+esc(fb)+'" onerror="artFb(this)">';
 }
+function avHTML(theme,i){const a=ART[theme]&&ART[theme].avatar&&ART[theme].avatar[i%12],fb=TH[theme].avatars[i%12];
+  return a?'<img class="avimg" src="'+a+'" width="64" height="64" alt="" loading="lazy" decoding="async" data-fb="'+esc(fb)+'" onerror="artFb(this)">':fb;}
 function artFb(i){const s=document.createElement('span');s.textContent=i.dataset.fb||'';i.replaceWith(s);}
 const SVG_OK='<svg viewBox="0 0 26 26" role="img" aria-label="已投票"><title>已投票</title><circle cx="13" cy="13" r="12" fill="#2f9e5b" stroke="#fff" stroke-width="2"/><path d="M7 13.5l4 4 8-9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const SVG_SHIELD='<svg viewBox="0 0 20 22" width="1em" height="1em" role="img" aria-label="受保護" style="vertical-align:-.15em"><title>受保護</title><path d="M10 1l8 3v6c0 5-3.5 9-8 11C5.5 19 2 15 2 10V4z" fill="#4de1ff" fill-opacity=".85" stroke="#fff" stroke-width="1.6"/><path d="M6.5 10.5l2.5 2.5 4.5-5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -640,12 +659,12 @@ const H={
   say(){const e=document.getElementById('hmsg');if(e&&e.value.trim()){dmAll(TH[G.theme].t.dm+'：'+e.value.trim().slice(0,40),'#9fffd0');e.value='';}}
 };
 
-function avatarOf(v,id){const i=v.players.findIndex(p=>p.id===id);return TH[v.theme].avatars[(i<0?0:i)%12];}
+function avatarOf(v,id){const i=v.players.findIndex(p=>p.id===id);return avHTML(v.theme,(i<0?0:i)%12);}
 function roleTag(v,r){const x=TH[v.theme].roles[r];return x[1]+' '+x[0];}
 function pgrid(v,o){
   o=o||{};
   return '<div class="pg">'+v.players.map((q,i)=>
-    '<div class="pc '+(q.alive?'':'dead')+(o.on===q.id?' on':'')+'"><div class="av">'+(q.alive?TH[v.theme].avatars[i%12]:SVG_OUT)+'</div><div class="nm">'+esc(q.name)+(q.shield?' '+SVG_SHIELD:'')+'</div>'
+    '<div class="pc '+(q.alive?'':'dead')+(o.on===q.id?' on':'')+'"><div class="av">'+(q.alive?avHTML(v.theme,i%12):SVG_OUT)+'</div><div class="nm">'+esc(q.name)+(q.shield?' '+SVG_SHIELD:'')+'</div>'
     +(q.role?'<div class="rl">'+roleTag(v,q.role)+'</div>':'')
     +(q.alive?'':'<div class="dim" style="font-size:14px">（死掉）</div>')
     +(o.counts&&q.alive&&v.liveCounts&&v.liveCounts[q.id]?'<div class="ok" style="color:var(--bad)">🗳️ '+v.liveCounts[q.id]+' 票</div>':'')
@@ -811,7 +830,7 @@ const C={
 };
 function chatBox(){return '<div class="panel col"><b>💬 發送彈幕</b><div class="row"><input type="text" id="dmIn" maxlength="40" placeholder="想說什麼？" style="flex:1"><button class="btn sm" onclick="C.chat()">送出</button></div></div>';}
 function nameOf(id){const p=V.players.find(x=>x.id===id);return p?esc(p.name):'';}
-function targetBtns(ids,onclickFn,sel){return '<div class="tgrid">'+ids.map(id=>'<button class="btn sec '+(sel===id?'sel':'')+'" onclick="'+onclickFn(id)+'">'+TH[V.theme].avatars[Math.max(0,V.players.findIndex(p=>p.id===id))%12]+' '+nameOf(id)+'</button>').join('')+'</div>';}
+function targetBtns(ids,onclickFn,sel){return '<div class="tgrid">'+ids.map(id=>'<button class="btn sec '+(sel===id?'sel':'')+'" onclick="'+onclickFn(id)+'">'+avHTML(V.theme,Math.max(0,V.players.findIndex(p=>p.id===id))%12)+' '+nameOf(id)+'</button>').join('')+'</div>';}
 
 function audHTML(){
   const th=TH[V.theme];
