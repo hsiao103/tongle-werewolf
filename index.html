@@ -58,6 +58,17 @@ input[type=text],input[type=number],input[type=password],select{background:rgba(
 .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
 .rolecard{text-align:center;padding:26px 16px;border-radius:20px;border:2px solid var(--ac);background:linear-gradient(160deg,var(--card),transparent)}
 .rolecard .big{font-size:84px}
+.rolecard .big img{display:block;margin:0 auto;width:min(250px,72%);height:auto;border-radius:18px;box-shadow:0 6px 22px #0008}
+.btnthumb{width:30px;height:auto;vertical-align:middle;border-radius:6px;margin-right:4px}
+.blur img{filter:blur(20px) saturate(.3) brightness(.7)}
+.cardrow{display:flex;gap:10px;align-items:center}
+.cardthumb{width:56px;height:auto;flex:none;border-radius:10px}
+body.scr .pc{background:rgba(6,14,10,.74)}
+body.scr .sub{text-shadow:0 1px 6px #000c}
+.pc .ok svg{display:block;width:26px;height:26px;filter:drop-shadow(0 1px 2px #0008)}
+body.forest.scr{--ov1:.74;--ov2:.88;background:linear-gradient(rgba(4,12,9,var(--ov1)),rgba(4,12,9,var(--ov2))),url(assets/forest/backgrounds/bg-night.webp) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
+body.forest.scr.ph-lobby,body.forest.scr.ph-reveal,body.forest.scr.ph-end{--ov1:.72;--ov2:.88;background:linear-gradient(rgba(4,12,9,var(--ov1)),rgba(4,12,9,var(--ov2))),url(assets/forest/backgrounds/bg-cover.webp) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
+body.forest.scr.ph-dawn,body.forest.scr.ph-talk{--ov1:.78;--ov2:.9;background:linear-gradient(rgba(4,12,9,var(--ov1)),rgba(4,12,9,var(--ov2))),url(assets/forest/backgrounds/bg-dawn.webp) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
 .rolecard.bad{border-color:var(--bad)}
 .blur{filter:blur(9px);user-select:none}
 .note{font-size:14px;background:rgba(0,0,0,.25);border-radius:8px;padding:6px 10px}
@@ -161,6 +172,30 @@ const TH={
      ev:{storm:'🚨 氧氣洩漏！今日每人發言時間減半',gift:'🔋 備用能源啟動！一位幸運船員獲得新卡牌',fog:'📡 通訊雜訊！本輪投票只公布結果，不公布票數'},
      shotName:'反擊'}}
 };
+/* ===== 美術素材對照（集中管理；缺圖時自動退回 emoji）===== */
+const ART={
+  forest:{
+    role:{   // 只在「玩家本人」的身分卡出現；公開畫面不得使用。hunter（護衛犬）待補繪，暫用 emoji
+      wolf:{src:'assets/forest/cards/role-wolf.webp',w:480,h:449},
+      villager:{src:'assets/forest/cards/role-villager.webp',w:480,h:450},
+      seer:{src:'assets/forest/cards/role-seer.webp',w:480,h:479},
+      witch:{src:'assets/forest/cards/role-witch.webp',w:480,h:480}},
+    card:{   // 技能卡：只顯示在持有者自己的手機
+      peek:{src:'assets/forest/cards/skill-peek.webp',w:256,h:251},
+      save:{src:'assets/forest/cards/skill-save.webp',w:256,h:251},
+      mute:{src:'assets/forest/cards/skill-mute.webp',w:256,h:251},
+      blur:{src:'assets/forest/cards/skill-blur.webp',w:256,h:251}}
+  },
+  ark:{role:{},card:{}}   // 方舟版素材尚未提供：留空即全部退回 emoji
+};
+function artImg(theme,kind,key,alt,cls,fb){
+  const a=ART[theme]&&ART[theme][kind]&&ART[theme][kind][key];if(!a)return fb;
+  return '<img src="'+a.src+'" width="'+a.w+'" height="'+a.h+'" alt="'+esc(alt)+'" loading="lazy" decoding="async"'+(cls?' class="'+cls+'"':'')+' data-fb="'+esc(fb)+'" onerror="artFb(this)">';
+}
+function artFb(i){const s=document.createElement('span');s.textContent=i.dataset.fb||'';i.replaceWith(s);}
+const SVG_OK='<svg viewBox="0 0 26 26" role="img" aria-label="已投票"><title>已投票</title><circle cx="13" cy="13" r="12" fill="#2f9e5b" stroke="#fff" stroke-width="2"/><path d="M7 13.5l4 4 8-9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const SVG_SHIELD='<svg viewBox="0 0 20 22" width="1em" height="1em" role="img" aria-label="受保護" style="vertical-align:-.15em"><title>受保護</title><path d="M10 1l8 3v6c0 5-3.5 9-8 11C5.5 19 2 15 2 10V4z" fill="#4de1ff" fill-opacity=".85" stroke="#fff" stroke-width="1.6"/><path d="M6.5 10.5l2.5 2.5 4.5-5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const SVG_OUT='<svg viewBox="0 0 40 44" width="38" height="42" role="img" aria-label="已淘汰"><title>已淘汰</title><path d="M20 3C11 3 5 10 5 19v22l5-4 5 4 5-4 5 4 5-4 5 4V19C35 10 29 3 20 3z" fill="#cfd8dc" stroke="#fff" stroke-width="2"/><circle cx="14" cy="19" r="3" fill="#37474f"/><circle cx="26" cy="19" r="3" fill="#37474f"/><ellipse cx="20" cy="28" rx="3.5" ry="2.5" fill="#37474f"/></svg>';
 const PHASE_NAME={lobby:'等待加入',reveal:'確認身分',night:'夜晚',dawn:'天亮',talk:'發言',vote:'投票',voteResult:'開票',lastwords:'遺言',hunter:'技能',end:'結束'};
 const ROLE_ORDER=['wolf','villager','seer','witch','hunter'];
 
@@ -608,11 +643,11 @@ function roleTag(v,r){const x=TH[v.theme].roles[r];return x[1]+' '+x[0];}
 function pgrid(v,o){
   o=o||{};
   return '<div class="pg">'+v.players.map((q,i)=>
-    '<div class="pc '+(q.alive?'':'dead')+(o.on===q.id?' on':'')+'"><div class="av">'+(q.alive?TH[v.theme].avatars[i%12]:'💀')+'</div><div class="nm">'+esc(q.name)+(q.shield?' 🛡️':'')+'</div>'
+    '<div class="pc '+(q.alive?'':'dead')+(o.on===q.id?' on':'')+'"><div class="av">'+(q.alive?TH[v.theme].avatars[i%12]:SVG_OUT)+'</div><div class="nm">'+esc(q.name)+(q.shield?' '+SVG_SHIELD:'')+'</div>'
     +(q.role?'<div class="rl">'+roleTag(v,q.role)+'</div>':'')
     +(q.alive?'':'<div class="dim" style="font-size:14px">（死掉）</div>')
     +(o.counts&&q.alive&&v.liveCounts&&v.liveCounts[q.id]?'<div class="ok" style="color:var(--bad)">🗳️ '+v.liveCounts[q.id]+' 票</div>':'')
-    +(o.votes&&q.alive&&!v.audOnly&&v.votedIds.includes(q.id)?'<div class="ok">✔</div>':'')
+    +(o.votes&&q.alive&&!v.audOnly&&v.votedIds.includes(q.id)?'<div class="ok">'+SVG_OK+'</div>':'')
     +(o.votes&&q.alive&&v.audOnly?'<div class="stt">票'+(v.votedIds.includes(q.id)?'✔':'…')+' 猜'+(v.guessedIds.includes(q.id)?'✔':'…')+' 卡'+({used:'✔已用',skip:'✔不用',hold:'…',none:'－'}[v.cardState[q.id]]||'－')+'</div>':'')
     +(o.online&&!q.bot&&!q.online?'<div class="dim" style="font-size:12px">離線</div>':'')
     +(o.online&&q.bot?'<div class="dim" style="font-size:12px">🤖</div>':'')+'</div>').join('')+'</div>';
@@ -766,7 +801,7 @@ const C={
   bless(id){C.send({t:'bless',target:id});},
   render(){
     if(!V){return;}
-    document.body.className=V.theme+' ph-'+V.phase;
+    document.body.className=V.theme+' ph-'+V.phase+(mode==='screen'?' scr':'');
     if(mode==='screen')setHTML('<div class="screen">'+screenHTML(V)+'</div>'+(audioOn?'':'<button class="btn" id="dbtn" onclick="enableAudio()">🔊 點擊開啟聲音與旁白</button>'));
     else setHTML(V.aud?audHTML():playerHTML());
     updateTimers();
@@ -796,7 +831,7 @@ function playerHTML(){
   if(R){
     const isBad=me.role==='wolf';
     const hidden=ui.hide!==false&&ph!=='reveal';
-    b+='<div class="rolecard '+(isBad?'bad':'')+'" onclick="C.set(\'hide\','+(hidden?'false':'true')+')"><div class="big '+(hidden?'blur':'')+'">'+R[1]+'</div><h2 class="'+(hidden?'blur':'')+'">'+R[0]+'</h2><div class="'+(hidden?'blur':'')+'" style="margin-top:6px">'+(isBad?th.camp.wolf:th.camp.good)+'</div><div class="dim '+(hidden?'blur':'')+'" style="margin-top:8px">'+R[2]+'</div>'+(ph!=='reveal'?'<div class="dim" style="margin-top:8px;font-size:13px">點一下可'+(hidden?'顯示':'隱藏')+'身分</div>':'')+'</div>';
+    b+='<div class="rolecard '+(isBad?'bad':'')+'" onclick="C.set(\'hide\','+(hidden?'false':'true')+')"><div class="big '+(hidden?'blur':'')+'">'+artImg(V.theme,'role',me.role,R[0],'',R[1])+'</div><h2 class="'+(hidden?'blur':'')+'">'+R[0]+'</h2><div class="'+(hidden?'blur':'')+'" style="margin-top:6px">'+(isBad?th.camp.wolf:th.camp.good)+'</div><div class="dim '+(hidden?'blur':'')+'" style="margin-top:8px">'+R[2]+'</div>'+(ph!=='reveal'?'<div class="dim" style="margin-top:8px;font-size:13px">點一下可'+(hidden?'顯示':'隱藏')+'身分</div>':'')+'</div>';
     if(me.team&&me.team.length>1)b+='<div class="panel">'+(me.role==='wolf'?'你的同伴：':'')+me.team.filter(t=>t.id!==me.id).map(t=>'<span class="chip" style="'+(t.alive?'':'opacity:.4')+'">'+nameOf(t.id)+'</span>').join(' ')+'</div>';
   }
   if(ph==='reveal')b+='<div class="panel dim">確認完畢後請把螢幕朝下，等待遊戲開始。</div>';
@@ -812,7 +847,7 @@ function playerHTML(){
   if(ph==='end'){const w=V.winner;const mine=me.role==='wolf'?'wolf':'good';
     b+='<div class="panel col"><h2>'+esc(th.t.win[w])+'</h2><div>'+(w===mine?'🏆 你的陣營獲勝！':'你的陣營落敗，下次加油！')+'</div><table>'+V.players.map(p=>'<tr><td>'+esc(p.name)+'</td><td>'+(p.role?roleTag(V,p.role):'')+'</td><td>'+(p.alive?'存活':'淘汰')+'</td></tr>').join('')+'</table></div>';}
   // 卡牌
-  if(me.cards.length&&ph!=='end')b+='<div class="panel col"><b>🃏 我的卡牌</b>'+me.cards.map(c=>'<div class="note">'+th.cards[c][1]+' <b>'+th.cards[c][0]+'</b>　'+th.cards[c][2]+'</div>').join('')+(me.muteNext?'<div class="dim">⚠️ 你下一個白天將被禁言</div>':'')+'</div>';
+  if(me.cards.length&&ph!=='end')b+='<div class="panel col"><b>🃏 我的卡牌</b>'+me.cards.map(c=>'<div class="note cardrow">'+artImg(V.theme,'card',c,th.cards[c][0],'cardthumb',th.cards[c][1])+'<div><b>'+th.cards[c][0]+'</b>　'+th.cards[c][2]+'</div></div>').join('')+(me.muteNext?'<div class="dim">⚠️ 你下一個白天將被禁言</div>':'')+'</div>';
   if(me.notes.length)b+='<div class="panel col"><b>🗒 私密情報</b>'+me.notes.map(n=>'<div class="note">'+esc(n)+'</div>').join('')+'</div>';
   if(!me.alive&&ph!=='end')b+='<div class="panel dim">你已淘汰，仍可觀戰並發送彈幕。</div>'+chatBox();
   return '<div class="wrap">'+(V.lost?'<div class="banner" style="text-align:center">連線中斷，重新連線中…</div>':'')+head+b+'</div>';
@@ -840,7 +875,7 @@ function askPanel(a){
   }
   if(a.type==='card'){
     if(a.done)return '<div class="panel"><h3>🃏 夜間卡牌：已處理</h3></div>';
-    let h='<div class="panel col"><h3>🃏 夜間卡牌（可跳過）</h3><div class="row">'+a.cards.map((c,i)=>'<button class="btn sec '+(ui.card===c?'sel':'')+'" onclick="C.set(\'card\',\''+c+'\')">'+th.cards[c][1]+' '+th.cards[c][0]+'</button>').filter((x,i,arr)=>arr.indexOf(x)===i).join('')+'<button class="btn sec" onclick="C.act(\'card\',{skip:true})">跳過</button></div>';
+    let h='<div class="panel col"><h3>🃏 夜間卡牌（可跳過）</h3><div class="row">'+a.cards.map((c,i)=>'<button class="btn sec '+(ui.card===c?'sel':'')+'" onclick="C.set(\'card\',\''+c+'\')">'+artImg(V.theme,'card',c,'','btnthumb',th.cards[c][1])+' '+th.cards[c][0]+'</button>').filter((x,i,arr)=>arr.indexOf(x)===i).join('')+'<button class="btn sec" onclick="C.act(\'card\',{skip:true})">跳過</button></div>';
     if(ui.card)h+='<div class="dim">'+th.cards[ui.card][2]+'</div>'+targetBtns(a.targets,id=>"C.act('card',{card:'"+ui.card+"',target:'"+id+"'})");
     return h+'</div>';
   }
@@ -856,7 +891,7 @@ function askPanel(a){
       +'<div class="dim">'+(a.guess?'已預判，可在時間內更改。':'尚未預判（開票時全班會看到被預判的人數，不會顯示是誰預判）')+'</div>'
       +'<b>③ 是否使用卡牌</b>';
     if(a.cards.length){
-      h+='<div class="row">'+a.cards.map(c=>'<button class="btn sec '+(ui.dc===c?'sel':'')+'" onclick="'+(c==='blur'?"C.act('playcard',{card:'blur'})":"C.set('dc','mute')")+'">'+th.cards[c][1]+' '+th.cards[c][0]+'</button>').filter((x,i,arr)=>arr.indexOf(x)===i).join('')
+      h+='<div class="row">'+a.cards.map(c=>'<button class="btn sec '+(ui.dc===c?'sel':'')+'" onclick="'+(c==='blur'?"C.act('playcard',{card:'blur'})":"C.set('dc','mute')")+'">'+artImg(V.theme,'card',c,'','btnthumb',th.cards[c][1])+' '+th.cards[c][0]+'</button>').filter((x,i,arr)=>arr.indexOf(x)===i).join('')
         +'<button class="btn sec '+(a.cardC==='skip'?'sel':'')+'" onclick="C.act(\'nocard\',{})">不使用卡牌</button></div>';
       if(ui.dc==='mute')h+='<div class="dim">選擇要禁言的人：</div>'+targetBtns(a.targets,id=>"C.act('playcard',{card:'mute',target:'"+id+"'});C.set('dc',null)");
       if(a.cardC==='used')h+='<div class="dim">已使用卡牌（還有其他可用卡牌時仍可再用）</div>';
