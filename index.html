@@ -18,7 +18,11 @@ body.ark .btn:not(.sec):not(.bad){color:#04101f}
 .btn.bad{background:var(--bad);color:#1a0509}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .btn.sel{outline:3px solid var(--tx)}
-.btn.sm{padding:6px 10px;font-size:13px;border-radius:8px}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:8px;min-height:36px}
+.btn{min-height:44px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid #ffd54a;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .col{display:flex;flex-direction:column;gap:10px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
@@ -73,11 +77,11 @@ body.menu .btn.sec{background:rgba(8,22,15,.88);border-color:rgba(255,255,255,.2
 body.menu input[type=text]{background:rgba(0,0,0,.55)}
 body.menu .dim,body.menu h1{text-shadow:0 1px 8px #000}
 body.menu .wrap>.dim,body.menu .wrap>div>.dim{text-shadow:0 1px 8px #000,0 0 3px #000}
-body.menu{background:linear-gradient(rgba(4,12,9,.66),rgba(4,12,9,.9)),url(assets/forest/backgrounds/bg-cover.webp) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
-body.ark.scr{background:linear-gradient(rgba(3,8,22,.8),rgba(3,8,22,.92)),url(assets/ark/backgrounds/bg-cover.webp) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
-body.forest.scr{--ov1:.74;--ov2:.88;background:linear-gradient(rgba(4,12,9,var(--ov1)),rgba(4,12,9,var(--ov2))),url(assets/forest/backgrounds/bg-night.webp) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
-body.forest.scr.ph-lobby,body.forest.scr.ph-reveal,body.forest.scr.ph-end{--ov1:.72;--ov2:.88;background:linear-gradient(rgba(4,12,9,var(--ov1)),rgba(4,12,9,var(--ov2))),url(assets/forest/backgrounds/bg-cover.webp) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
-body.forest.scr.ph-dawn,body.forest.scr.ph-talk{--ov1:.78;--ov2:.9;background:linear-gradient(rgba(4,12,9,var(--ov1)),rgba(4,12,9,var(--ov2))),url(assets/forest/backgrounds/bg-dawn.webp) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
+body.menu{background:linear-gradient(rgba(4,12,9,.66),rgba(4,12,9,.9)),url(assets/forest/backgrounds/bg-cover.webp?v=20261101) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
+body.ark.scr{background:linear-gradient(rgba(3,8,22,.8),rgba(3,8,22,.92)),url(assets/ark/backgrounds/bg-cover.webp?v=20261101) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
+body.forest.scr{--ov1:.74;--ov2:.88;background:linear-gradient(rgba(4,12,9,var(--ov1)),rgba(4,12,9,var(--ov2))),url(assets/forest/backgrounds/bg-night.webp?v=20261101) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
+body.forest.scr.ph-lobby,body.forest.scr.ph-reveal,body.forest.scr.ph-end{--ov1:.72;--ov2:.88;background:linear-gradient(rgba(4,12,9,var(--ov1)),rgba(4,12,9,var(--ov2))),url(assets/forest/backgrounds/bg-cover.webp?v=20261101) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
+body.forest.scr.ph-dawn,body.forest.scr.ph-talk{--ov1:.78;--ov2:.9;background:linear-gradient(rgba(4,12,9,var(--ov1)),rgba(4,12,9,var(--ov2))),url(assets/forest/backgrounds/bg-dawn.webp?v=20261101) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
 .rolecard.bad{border-color:var(--bad)}
 .blur{filter:blur(9px);user-select:none}
 .note{font-size:14px;background:rgba(0,0,0,.25);border-radius:8px;padding:6px 10px}
@@ -95,7 +99,8 @@ body.forest.scr.ph-dawn,body.forest.scr.ph-talk{--ov1:.78;--ov2:.9;background:li
 @keyframes float{50%{transform:translateY(-14px)}}
 .pg{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
 .pc{position:relative;min-width:104px;padding:10px 12px;border-radius:14px;background:var(--card);border:1px solid var(--line);text-align:center}
-.pc .av{font-size:38px}.pc .nm{font-weight:700}.pc.dead{opacity:.35;filter:grayscale(1)}
+.pc .av{font-size:38px}
+body.scr .pc{min-width:128px}body.scr .pc .nm{font-size:clamp(18px,1.5vw,28px)}body.scr .pc .av{font-size:clamp(44px,3.6vw,64px)}body.scr .pc .avimg{width:1em;height:1em}.pc .nm{font-weight:700}.pc.dead{opacity:.35;filter:grayscale(1)}
 .pc .ok{position:absolute;top:4px;right:8px;color:var(--ac2);font-weight:900}
 .pc .rl{font-size:13px;color:var(--ac)}
 .pc.on{outline:3px solid var(--ac);transform:scale(1.08)}
@@ -127,7 +132,8 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:4px 6px;b
 <body>
 <div id="app"></div>
 <div id="dm"></div>
-<div id="toast"></div>
+<div id="toast" role="status"></div>
+<div id="live" class="sr" aria-live="polite" aria-atomic="true"></div>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
@@ -182,6 +188,8 @@ const TH={
      shotName:'反擊'}}
 };
 /* ===== 美術素材對照（集中管理；缺圖時自動退回 emoji）===== */
+const ASSET_V='20261101'; // 換圖時更新此值，避免瀏覽器沿用舊快取
+const av_=src=>src+'?v='+ASSET_V;
 const ART={
   forest:{
     role:{   // 只在「玩家本人」的身分卡出現；公開畫面不得使用
@@ -214,10 +222,10 @@ const ART={
 };
 function artImg(theme,kind,key,alt,cls,fb){
   const a=ART[theme]&&ART[theme][kind]&&ART[theme][kind][key];if(!a)return fb;
-  return '<img src="'+a.src+'" width="'+a.w+'" height="'+a.h+'" alt="'+esc(alt)+'" loading="lazy" decoding="async"'+(cls?' class="'+cls+'"':'')+' data-fb="'+esc(fb)+'" onerror="artFb(this)">';
+  return '<img src="'+av_(a.src)+'" width="'+a.w+'" height="'+a.h+'" alt="'+esc(alt)+'" loading="lazy" decoding="async"'+(cls?' class="'+cls+'"':'')+' data-fb="'+esc(fb)+'" onerror="artFb(this)">';
 }
 function avHTML(theme,i){const a=ART[theme]&&ART[theme].avatar&&ART[theme].avatar[i%12],fb=TH[theme].avatars[i%12];
-  return a?'<img class="avimg" src="'+a+'" width="64" height="64" alt="" loading="lazy" decoding="async" data-fb="'+esc(fb)+'" onerror="artFb(this)">':fb;}
+  return a?'<img class="avimg" src="'+av_(a)+'" width="64" height="64" alt="" loading="lazy" decoding="async" data-fb="'+esc(fb)+'" onerror="artFb(this)">':fb;}
 function artFb(i){const s=document.createElement('span');s.textContent=i.dataset.fb||'';i.replaceWith(s);}
 const SVG_OK='<svg viewBox="0 0 26 26" role="img" aria-label="已投票"><title>已投票</title><circle cx="13" cy="13" r="12" fill="#2f9e5b" stroke="#fff" stroke-width="2"/><path d="M7 13.5l4 4 8-9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const SVG_SHIELD='<svg viewBox="0 0 20 22" width="1em" height="1em" role="img" aria-label="受保護" style="vertical-align:-.15em"><title>受保護</title><path d="M10 1l8 3v6c0 5-3.5 9-8 11C5.5 19 2 15 2 10V4z" fill="#4de1ff" fill-opacity=".85" stroke="#fff" stroke-width="1.6"/><path d="M6.5 10.5l2.5 2.5 4.5-5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -787,6 +795,9 @@ function startClient(room,kind){
   if(myPid&&localStorage.getItem(nameKey)){setTimeout(()=>C.join(true),50);}
 }
 let reconnectTimer=null,joined=false;
+const preBg={};
+let lastAnn='';
+function announce(){const el=document.getElementById('live');if(!el||!V)return;const k=V.phase+'|'+V.round;if(k===lastAnn)return;lastAnn=k;const n={night:'夜晚',dawn:'天亮',talk:'發言',vote:'投票',voteResult:'開票',end:'遊戲結束',reveal:'確認身分',lobby:'等待加入'}[V.phase]||'';el.textContent=n?(V.round?'第 '+V.round+' 回合，':'')+n:'';}
 const C={
   join(auto){
     const name=((document.getElementById('nameIn')||{}).value||localStorage.getItem('tgww_name')||'').trim();
@@ -830,6 +841,8 @@ const C={
     document.body.className=V.theme+' ph-'+V.phase+(mode==='screen'?' scr':'');
     if(mode==='screen')setHTML('<div class="screen">'+screenHTML(V)+'</div>'+(audioOn?'':'<button class="btn" id="dbtn" onclick="enableAudio()">🔊 點擊開啟聲音與旁白</button>'));
     else setHTML(V.aud?audHTML():playerHTML());
+    if(mode==='screen'&&!preBg[V.theme]){preBg[V.theme]=1;setTimeout(()=>['bg-night','bg-dawn','bg-cover'].forEach(n=>{const i=new Image();i.src=av_('assets/'+V.theme+'/backgrounds/'+n+'.webp');}),800);}
+    announce();
     updateTimers();
   }
 };
@@ -857,7 +870,7 @@ function playerHTML(){
   if(R){
     const isBad=me.role==='wolf';
     const hidden=ui.hide!==false&&ph!=='reveal';
-    b+='<div class="rolecard '+(isBad?'bad':'')+'" onclick="C.set(\'hide\','+(hidden?'false':'true')+')"><div class="big '+(hidden?'blur':'')+'">'+artImg(V.theme,'role',me.role,R[0],'',R[1])+'</div><h2 class="'+(hidden?'blur':'')+'">'+R[0]+'</h2><div class="'+(hidden?'blur':'')+'" style="margin-top:6px">'+(isBad?th.camp.wolf:th.camp.good)+'</div><div class="dim '+(hidden?'blur':'')+'" style="margin-top:8px">'+R[2]+'</div>'+(ph!=='reveal'?'<div class="dim" style="margin-top:8px;font-size:13px">點一下可'+(hidden?'顯示':'隱藏')+'身分</div>':'')+'</div>';
+    b+='<div class="rolecard '+(isBad?'bad':'')+'" role="button" tabindex="0" aria-pressed="'+(hidden?'true':'false')+'" aria-label="隱藏我的身分（按下切換）" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}" onclick="C.set(\'hide\','+(hidden?'false':'true')+')"><div class="big '+(hidden?'blur':'')+'">'+artImg(V.theme,'role',me.role,R[0],'',R[1])+'</div><h2 class="'+(hidden?'blur':'')+'">'+R[0]+'</h2><div class="'+(hidden?'blur':'')+'" style="margin-top:6px">'+(isBad?th.camp.wolf:th.camp.good)+'</div><div class="dim '+(hidden?'blur':'')+'" style="margin-top:8px">'+R[2]+'</div>'+(ph!=='reveal'?'<div class="dim" style="margin-top:8px;font-size:13px">點一下可'+(hidden?'顯示':'隱藏')+'身分</div>':'')+'</div>';
     if(me.team&&me.team.length>1)b+='<div class="panel">'+(me.role==='wolf'?'你的同伴：':'')+me.team.filter(t=>t.id!==me.id).map(t=>'<span class="chip" style="'+(t.alive?'':'opacity:.4')+'">'+nameOf(t.id)+'</span>').join(' ')+'</div>';
   }
   if(ph==='reveal')b+='<div class="panel dim">確認完畢後請把螢幕朝下，等待遊戲開始。</div>';

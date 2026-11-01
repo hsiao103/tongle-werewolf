@@ -45,7 +45,7 @@ def parse_art():
                 out.append(dict(theme=th, kind='avatar', key='%02d' % i, file=src, declared=None))
     # 背景：從 CSS url() 取
     seen = set()
-    for src in re.findall(r'url\((assets/[^)]+backgrounds/[^)]+)\)', HTML):
+    for src in re.findall(r'url\((assets/[^)?]+backgrounds/[^)?]+)(?:\?v=\w+)?\)', HTML):
         if src in seen: continue
         seen.add(src)
         th = src.split('/')[1]
@@ -126,6 +126,12 @@ def main():
                   '- 公開畫面只使用 `avatar`、`bg`（見 `visibility`）；實際請求由 `tests/browser.js` 驗證',
                   '- 無未被引用的素材檔：%s' % ('通過' if not [e for e in errors if '未被引用' in e] else '**不通過**'),
                   '- 備註：靜態網站無法阻止圖片被下載，保密靠「不告知」：只有本人的畫面會請求自己的卡片。', '']
+        lines += ['## 載入與無障礙（由 tests/browser.js 驗證）', '',
+                  '- 素材網址帶 `?v=ASSET_V`，換圖時更新版本即可避開舊快取；大螢幕閒置時預載夜晚／天亮／封面背景',
+                  '- 身分卡、技能卡 `loading="lazy"`；缺圖自動回退 emoji；背景缺圖回退漸層',
+                  '- 身分卡可用鍵盤（Enter／Space）切換，帶 `role=button`、`aria-pressed`',
+                  '- `#live` 播報階段變化；`prefers-reduced-motion` 關閉動畫；`:focus-visible` 明顯焦點框',
+                  '- 主要按鈕高度 ≥ 44px；720p 投影玩家名稱 ≥ 18px；文字對比 ≥ 4.5（主持台／玩家／規則）', '']
         for k, v in NOTES.items(): lines.append('- ' + v)
         (ROOT / 'ASSET_ACCEPTANCE.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
         print('已寫入 assets/manifest.json、ASSET_ACCEPTANCE.md')

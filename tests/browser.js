@@ -52,7 +52,7 @@ const CONTRAST=()=>{
   }
   const RA=/assets\/\w+\/(role|skill)-(\w+)\.webp/;
   for(const theme of ['forest','ark']){
-    console.log('== 主題',theme);
+    console.log('== 主題',theme);let t;
     // 手機：每個身分只載入自己的身分卡
     for(const [i,role] of [[0,'seer'],[1,'wolf'],[2,'witch'],[3,'villager'],[4,'hunter']]){
       const t=await mk(theme,{width:390,height:844});
@@ -62,8 +62,25 @@ const CONTRAST=()=>{
       if(shotsArg)await t.page.screenshot({path:path.join(shotsArg,`${theme}-role-${role}.png`)});
       await t.ctx.close();
     }
+    // 無障礙：身分卡可用鍵盤切換、有 aria-pressed；#live 會播報階段
+    t=await mk(theme,{width:390,height:844});
+    await t.page.evaluate(()=>__show('player',0,'talk'));
+    const a0=await t.page.evaluate(()=>{const e=document.querySelector('.rolecard');return [e.getAttribute('role'),e.tabIndex,e.getAttribute('aria-pressed')];});
+    await t.page.focus('.rolecard');await t.page.keyboard.press('Enter');
+    const a1=await t.page.evaluate(()=>document.querySelector('.rolecard').getAttribute('aria-pressed'));
+    ok(a0[0]==='button'&&a0[1]===0&&a0[2]!==a1,`${theme}: 身分卡需可用鍵盤操作並更新 aria-pressed（${a0}→${a1}）`);
+    ok((await t.page.evaluate(()=>document.getElementById('live').textContent)).length>0,`${theme}: #live 應播報階段`);
+    const btnH=await t.page.evaluate(()=>[...document.querySelectorAll('.btn:not(.sm)')].map(b=>b.getBoundingClientRect().height).filter(h=>h>0&&h<44).length);
+    ok(btnH===0,`${theme}: 主要按鈕高度需 ≥44px`);
+    await t.ctx.close();
+    // 投影：720p 玩家名稱字級 ≥18px
+    t=await mk(theme,{width:1280,height:720});
+    await t.page.evaluate(()=>__show('screen',0,'night'));
+    const fs=await t.page.evaluate(()=>{const e=document.querySelector('.pc .nm');return e?parseFloat(getComputedStyle(e).fontSize):99;});
+    ok(fs>=18,`${theme}: 720p 投影玩家名稱 ${fs}px < 18px`);
+    await t.ctx.close();
     // 技能卡：只載入自己持有的
-    let t=await mk(theme,{width:390,height:844});
+    t=await mk(theme,{width:390,height:844});
     await t.page.evaluate(()=>__show('player',2,'night'));await t.page.waitForTimeout(300);
     const sk=t.reqs.filter(x=>/skill-/.test(x)).map(x=>x.match(/skill-(\w+)/)[1]);
     ok(sk.every(s=>s==='blur'),`${theme}: 女巫只持有 blur，實際載入 ${sk}`);
@@ -80,7 +97,7 @@ const CONTRAST=()=>{
     ok(!t.reqs.some(x=>RA.test(x)),`${theme}: 投影畫面不得請求身分/技能卡`);
     await t.ctx.close();
     // 圖片缺失回退：封鎖全部 webp，仍要有可讀的 emoji 與角色名
-    t=await mk(theme,{width:390,height:844});await t.page.route('**/*.webp',r=>r.abort());
+    t=await mk(theme,{width:390,height:844});await t.page.route('**/*.webp*',r=>r.abort());
     await t.page.evaluate(()=>__show('player',2,'reveal'));await t.page.waitForTimeout(500);
     const fb=await t.page.evaluate(()=>({imgs:document.querySelectorAll('.rolecard img').length,txt:document.querySelector('.rolecard').innerText}));
     ok(fb.imgs===0&&fb.txt.length>0,`${theme}: 圖片失敗後應回退為文字/emoji（img=${fb.imgs}）`);
