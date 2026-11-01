@@ -66,6 +66,7 @@ input[type=text],input[type=number],input[type=password],select{background:rgba(
 body.scr .pc{background:rgba(6,14,10,.74)}
 body.scr .sub{text-shadow:0 1px 6px #000c}
 .pc .ok svg{display:block;width:26px;height:26px;filter:drop-shadow(0 1px 2px #0008)}
+body.menu{background:linear-gradient(rgba(4,12,9,.58),rgba(4,12,9,.86)),url(assets/forest/backgrounds/bg-cover.webp) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
 body.forest.scr{--ov1:.74;--ov2:.88;background:linear-gradient(rgba(4,12,9,var(--ov1)),rgba(4,12,9,var(--ov2))),url(assets/forest/backgrounds/bg-night.webp) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
 body.forest.scr.ph-lobby,body.forest.scr.ph-reveal,body.forest.scr.ph-end{--ov1:.72;--ov2:.88;background:linear-gradient(rgba(4,12,9,var(--ov1)),rgba(4,12,9,var(--ov2))),url(assets/forest/backgrounds/bg-cover.webp) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
 body.forest.scr.ph-dawn,body.forest.scr.ph-talk{--ov1:.78;--ov2:.9;background:linear-gradient(rgba(4,12,9,var(--ov1)),rgba(4,12,9,var(--ov2))),url(assets/forest/backgrounds/bg-dawn.webp) center/cover no-repeat fixed,radial-gradient(1400px 800px at 50% -10%,var(--bg2),var(--bg))}
@@ -1001,6 +1002,7 @@ var a="hsiao103@tmail.ilc.edu.tw",ok=function(){b.textContent='已複製 ✓';se
 if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(a).then(ok,fb);else fb()});
 
 function menu(){
+  document.body.className='forest menu';
   setHTML('<div class="wrap"><div style="text-align:center;padding:20px 0"><div style="font-size:64px">🐺🚀</div><h1>數位狼人殺</h1><div class="dim">同樂版・1 台大螢幕＋N 支手機＋觀眾彈幕</div></div>'
     +'<button class="btn" onclick="startHost()">🎬 我是主持人（私人主控台）</button>'
     +'<div class="panel col"><b>我有房號</b><input type="text" id="roomIn" maxlength="4" inputmode="numeric" placeholder="4 位數房號">'
