@@ -1,0 +1,60 @@
+{
+  "project": "數位狼人殺・同樂版",
+  "asset_count": 12,
+  "notes": [
+    "All files are original PNG composites, not independent transparent sprites.",
+    "Do not use UI mockups as functional UI.",
+    "Verify crop boundaries manually.",
+    "Do not expose private roles on projector."
+  ],
+  "assets": [
+    {
+      "path": "forest/backgrounds/forest-cover.png",
+      "source": "a_colorful_cute_cartoon_illustration_a_fantasy_f.png"
+    },
+    {
+      "path": "ark/backgrounds/ark-cover.png",
+      "source": "a_vibrant_cute_cartoon_anime_style_scene_in_a_spa.png"
+    },
+    {
+      "path": "forest/characters/shadow-wolf-sheet.png",
+      "source": "a_clean_character_sheet_illustration_on_a_white_b.png"
+    },
+    {
+      "path": "forest/characters/owl-seer-sheet.png",
+      "source": "image_a_cute_cartoon_owl_character_design_sheet.png"
+    },
+    {
+      "path": "forest/characters/villager-sheet.png",
+      "source": "a_colorful_chibi_cartoon_character_sheet_illustrat.png"
+    },
+    {
+      "path": "forest/characters/herbal-witch-sheet.png",
+      "source": "a_cute_chibi_cartoon_character_sheet_of_a_young_w.png"
+    },
+    {
+      "path": "forest/characters/ranger-sheet.png",
+      "source": "a_colorful_cute_chibi_character_sheet_illustratio.png"
+    },
+    {
+      "path": "forest/cards/skills-sheet.png",
+      "source": "a_2x2_grid_of_cute_cartoon_fantasy_game_ability_ic.png"
+    },
+    {
+      "path": "forest/cards/roles-sheet.png",
+      "source": "a_colorful_cute_chibi_cartoon_illustration_set_of.png"
+    },
+    {
+      "path": "forest/ui/status-sheet.png",
+      "source": "a_clean_white_background_with_five_cute_chibi_badg.png"
+    },
+    {
+      "path": "forest/backgrounds/night-dawn-sheet.png",
+      "source": "two_panel_illustration_stacked_top_panel_night_s.png"
+    },
+    {
+      "path": "forest/ui/mobile-mockups-sheet.png",
+      "source": "four_smartphone_ui_panels_side_by_side_in_a_cute.png"
+    }
+  ]
+}
