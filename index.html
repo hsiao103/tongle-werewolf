@@ -223,7 +223,7 @@ setInterval(()=>{try{updateTimers();}catch(e){}},250);
    ===================================================================== */
 function newGame(code,keep){
   G={room:code,theme:keep?keep.theme:'forest',phase:'lobby',round:0,players:keep?keep.players:[],aud:keep?keep.aud:[],screens:keep?keep.screens:[],
-     settings:keep?keep.settings:{talkSec:45,nightSec:25,voteSec:30,lastSec:20,reveal:false,edge:false,autoEvent:true,narrate:true,sound:true},
+     settings:keep?keep.settings:{talkSec:45,nightSec:25,voteSec:30,lastSec:20,reveal:false,edge:false,audOnly:false,autoEvent:true,narrate:true,sound:true},
      deadline:0,onTimeout:null,paused:false,remain:0,botT:{},potions:{heal:true,poison:true},wolfLog:[],
      speakerQ:[],speaker:null,speakerMuted:false,dawn:null,vote:null,voteRes:null,audBless:{},event:null,talkMul:1,fog:false,
      hunterQueue:[],hunterNow:null,hunterResult:null,hunterCont:null,lastId:null,winner:null};
@@ -398,11 +398,11 @@ function viewFor(p,isAud){
   const v={t:'state',now:now(),theme:G.theme,phase:G.phase,round:G.round,deadline:G.deadline,paused:G.paused,remain:G.paused?G.remain:null,
     players:G.players.map(q=>({id:q.id,name:q.name,alive:q.alive,shield:q.shield,online:q.online,bot:q.bot,
       role:(G.phase==='end'||(!q.alive&&G.settings.reveal))?q.role:null,cause:q.deathCause})),
-    speaker:G.speaker,speakerMuted:G.speakerMuted,speakerQ:G.speakerQ,dawn:G.dawn,voteRes:G.voteRes,event:G.event,lastId:G.lastId,
+    speaker:G.speaker,speakerMuted:G.speakerMuted,speakerQ:G.speakerQ,dawn:G.dawn,voteRes:(G.voteRes&&!(isAud&&G.settings.audOnly))?Object.assign({},G.voteRes,{guesses:[]}):G.voteRes,event:G.event,lastId:G.lastId,
     hunterNow:G.hunterNow,hunterResult:G.hunterResult,winner:G.winner,
-    votedIds:G.vote?Object.keys(G.vote.votes):[],guessedIds:G.vote?Object.keys(G.vote.guess||{}):[],
-    cardState:G.vote?Object.fromEntries(G.players.filter(q=>q.alive).map(q=>[q.id,G.vote.cardC[q.id]||(usableCards(q).length?'hold':'none')])):{},
-    liveCounts:(G.vote&&!G.fog)?(()=>{const c={};Object.entries(G.vote.votes).forEach(([vid,t])=>{const a=byId(vid),b=byId(t);if(a&&a.alive&&b&&b.alive)c[t]=(c[t]||0)+1;});return c;})():null,
+    votedIds:G.vote?Object.keys(G.vote.votes):[],audOnly:!!(isAud&&G.settings.audOnly),guessedIds:(isAud&&G.settings.audOnly&&G.vote)?Object.keys(G.vote.guess||{}):[],
+    cardState:(isAud&&G.settings.audOnly&&G.vote)?Object.fromEntries(G.players.filter(q=>q.alive).map(q=>[q.id,G.vote.cardC[q.id]||(usableCards(q).length?'hold':'none')])):{},
+    liveCounts:(isAud&&G.settings.audOnly&&G.vote&&!G.fog)?(()=>{const c={};Object.entries(G.vote.votes).forEach(([vid,t])=>{const a=byId(vid),b=byId(t);if(a&&a.alive&&b&&b.alive)c[t]=(c[t]||0)+1;});return c;})():null,
     fog:!!G.fog,cardLog:G.vote?G.vote.log:[],audCount:G.aud.filter(a=>a.conn).length,blessN:Object.keys(G.audBless).length,
     room:G.room};
   if(isAud){v.aud=true;v.me=null;v.myBless=G.audBless[p.id]||null;return v;}
@@ -612,7 +612,8 @@ function pgrid(v,o){
     +(q.role?'<div class="rl">'+roleTag(v,q.role)+'</div>':'')
     +(q.alive?'':'<div class="dim" style="font-size:14px">（死掉）</div>')
     +(o.counts&&q.alive&&v.liveCounts&&v.liveCounts[q.id]?'<div class="ok" style="color:var(--bad)">🗳️ '+v.liveCounts[q.id]+' 票</div>':'')
-    +(o.votes&&q.alive?'<div class="stt">票'+(v.votedIds.includes(q.id)?'✔':'…')+' 猜'+(v.guessedIds.includes(q.id)?'✔':'…')+' 卡'+({used:'✔已用',skip:'✔不用',hold:'…',none:'－'}[v.cardState[q.id]]||'－')+'</div>':'')
+    +(o.votes&&q.alive&&!v.audOnly&&v.votedIds.includes(q.id)?'<div class="ok">✔</div>':'')
+    +(o.votes&&q.alive&&v.audOnly?'<div class="stt">票'+(v.votedIds.includes(q.id)?'✔':'…')+' 猜'+(v.guessedIds.includes(q.id)?'✔':'…')+' 卡'+({used:'✔已用',skip:'✔不用',hold:'…',none:'－'}[v.cardState[q.id]]||'－')+'</div>':'')
     +(o.online&&!q.bot&&!q.online?'<div class="dim" style="font-size:12px">離線</div>':'')
     +(o.online&&q.bot?'<div class="dim" style="font-size:12px">🤖</div>':'')+'</div>').join('')+'</div>';
 }
@@ -641,7 +642,7 @@ function screenHTML(v){
       +(v.speakerMuted?'<div class="banner" style="background:var(--bad);color:#fff">🤐 被禁言，跳過發言</div>':'')
       +'<div class="sub">'+(q?'接下來：'+q:'這是最後一位')+'</div>'+pgrid(v,{on:v.speaker});
   }else if(v.phase==='vote'){
-    main=evb+rbanner(v)+'<div class="huge">🗳️ 夜晚前的決定</div><div class="sub">每位玩家在手機上：①投票淘汰一人　②預判誰是狼人　③決定是否使用卡牌'+(v.fog?'　🌫️ 本輪票數保密':'')+'</div>'+pgrid(v,{votes:true,counts:true})
+    main=evb+rbanner(v)+'<div class="huge">🗳️ 夜晚前的決定</div><div class="sub">每位玩家在手機上：①投票淘汰一人　②預判誰是狼人　③決定是否使用卡牌'+(v.audOnly?'':'')+(v.fog?'　🌫️ 本輪票數保密':'')+'</div>'+pgrid(v,{votes:true,counts:true})
       +'<div class="sub">🙌 觀眾守護票：'+v.blessN+'　'+(v.cardLog.length?esc(v.cardLog.join('　｜　')):'')+'</div>';
   }else if(v.phase==='voteResult'){
     const r=v.voteRes||{};
@@ -685,7 +686,7 @@ function consoleHTML(){
       +'<div class="field">夜間每步驟<input type="number" value="'+S.nightSec+'" onchange="H.num(\'nightSec\',this.value)"></div>'
       +'<div class="field">投票時間<input type="number" value="'+S.voteSec+'" onchange="H.num(\'voteSec\',this.value)"></div>'
       +'<div class="field">遺言時間<input type="number" value="'+S.lastSec+'" onchange="H.num(\'lastSec\',this.value)"></div>'
-      +tog('autoEvent','白天自動隨機事件')+tog('reveal','淘汰後公開身分')+tog('edge','屠邊規則（神職全滅＝反派勝）')+tog('narrate','大螢幕語音旁白')+tog('sound','大螢幕音效')+'</div>'
+      +tog('autoEvent','白天自動隨機事件')+tog('reveal','淘汰後公開身分')+tog('edge','屠邊規則（神職全滅＝反派勝）')+tog('audOnly','大螢幕＝觀眾專用（顯示即時票數、完成進度、預判統計；選手與觀眾須分開）')+tog('narrate','大螢幕語音旁白')+tog('sound','大螢幕音效')+'</div>'
       +'<button class="btn" '+(G.players.length<6?'disabled':'')+' onclick="H.start()">▶ 開始遊戲（需 6–12 人）</button>';
   }else{
     const mk=t=>peeking?t:'<span class="dim">••••</span>';
@@ -788,7 +789,7 @@ function playerHTML(){
   const th=TH[V.theme];const me=V.me;const ph=V.phase;
   const R=me&&me.role?th.roles[me.role]:null;
   let b='';
-  const head='<div class="hd"><div><b>'+esc(me.name)+'</b> '+(me.alive?'':'<span class="chip">💀 已淘汰</span>')+'</div><span class="row"><button class="btn sec sm" onclick="showRules()">📖 規則</button><span class="chip">'+PHASE_NAME[ph]+' <span class="tm"></span></span></span></div>';
+  const head='<div class="hd"><div><b>'+esc(me.name)+'</b> '+(me.alive?'':'<span class="chip">💀 已淘汰</span>')+'</div><span class="row"><button class="btn sec sm" onclick="showRules()">📖 規則</button><span class="chip">'+(V.round?'第 '+V.round+' 夜・':'')+PHASE_NAME[ph]+' <span class="tm"></span></span></span></div>';
   if(ph==='lobby'){
     return '<div class="wrap">'+head+'<div class="panel rest"><div class="big">'+th.emoji+'</div><h2>已加入！</h2><div class="dim">請等待主持人開始遊戲<br>目前 '+V.players.length+' 人在房間</div></div></div>';
   }
@@ -848,7 +849,7 @@ function askPanel(a){
   }
   if(a.type==='vote'){
     const ck=(x)=>x?'✅':'⬜';
-    let h='<div class="panel col"><h3>🌙 第 '+V.round+' 夜結束前：三件事</h3><div class="dim">'+ck(a.mine)+' ①投票　'+ck(a.guess)+' ②預判狼人　'+ck(a.cardC||!a.cards.length)+' ③卡牌</div>'
+    let h='<div class="panel col"><h3>🌙 第 '+V.round+' 夜結束前：三件事</h3><div class="dim">全班已投票 '+V.votedIds.length+' / '+V.players.filter(x=>x.alive).length+' 人</div><div class="dim">'+ck(a.mine)+' ①投票　'+ck(a.guess)+' ②預判狼人　'+ck(a.cardC||!a.cards.length)+' ③卡牌</div>'
       +'<b>① 投票：你要淘汰誰？</b>'+targetBtns(a.targets,id=>"C.act('vote',{target:'"+id+"'})",a.mine)
       +'<div class="row"><button class="btn sec '+(a.mine==='skip'?'sel':'')+'" onclick="C.act(\'vote\',{target:\'skip\'})">棄票</button></div><div class="dim">'+(a.mine?'已投票，可在時間內更改。':'尚未投票')+'</div>'
       +'<b>② 預判：你覺得誰是'+th.camp.wolf+'？</b>'+targetBtns(a.targets,id=>"C.act('guess',{target:'"+id+"'})",a.guess)
@@ -901,7 +902,7 @@ function rulesBody(tab,k){
     +'<div class="note">夜間結算：被襲擊的人若沒被救就出局；被'+th.poison+'選中的人一定出局。</div>';
   if(tab==='day')return '<h3>天亮</h3>'+ul(['大螢幕公布昨夜出局的人，或宣布平安夜。','預設<b>不公開</b>出局者的身分；主持人可以在設定中開啟「淘汰後公開身分」。'])
     +'<h3>發言</h3>'+ul(['依座位順序輪流發言，每人預設 45 秒；每輪的起點會輪替。','輪到的人名字會在大螢幕亮起，主持人可隨時跳過。','被「'+C.mute[0]+'」封鎖的人，當天會直接跳過發言。'])
-    +'<h3>投票</h3>'+ul(['每位存活玩家在手機上秘密投一票，不能投自己，也可以棄票。','投票時間內可以更改選擇；全員都投完後，會在 5 秒後提早結算。','每夜結束前，每位玩家要完成三件事：①投票淘汰一人 ②<b>預判誰是'+cp.wolf+'</b> ③決定是否使用卡牌（也可按「不使用卡牌」）；三項都完成才會提早結算。','大螢幕會標示第幾夜、每人的完成進度、<b>每位玩家目前被投幾票</b>（遇到「票數保密」事件則隱藏）、已淘汰者顯示「（死掉）」；開票後還會公布各人被預判為'+cp.wolf+'的人數。','大螢幕<b>不顯示誰投給誰</b>。','得票最高且<b>唯一</b>的人出局；平手或沒人得票，今天沒有人出局。','出局者有一段遺言時間（預設 20 秒）。'])
+    +'<h3>投票</h3>'+ul(['每位存活玩家在手機上秘密投一票，不能投自己，也可以棄票。','投票時間內可以更改選擇；全員都投完後，會在 5 秒後提早結算。','每夜結束前，每位玩家要完成三件事：①投票淘汰一人 ②<b>預判誰是'+cp.wolf+'</b> ③決定是否使用卡牌（也可按「不使用卡牌」）；三項都完成才會提早結算。','大螢幕會標示第幾夜、每人的完成進度、<b>每位玩家目前被投幾票</b>（遇到「票數保密」事件則隱藏）、已淘汰者顯示「（死掉）」；開票後還會公布各人被預判為'+cp.wolf+'的人數。','大螢幕<b>不顯示誰投給誰</b>。主持人若開啟「大螢幕＝觀眾專用」，大螢幕才會即時顯示每人被投幾票、完成進度與預判統計；預設關閉（全班共看，只在開票後公布票數）。','得票最高且<b>唯一</b>的人出局；平手或沒人得票，今天沒有人出局。','出局者有一段遺言時間（預設 20 秒）。'])
     +'<h3>'+R.hunter[0]+'的技能</h3>'+ul(['被襲擊或被投票出局時，可在 20 秒內選一位存活玩家一起帶走。','被'+th.poison+'選中出局則不能發動。','超時沒選，視為放棄技能。'])
     +'<h3>出局之後</h3>'+ul(['出局的玩家不能再發言或行動，但仍可在手機上看到公開資訊，並用彈幕參與。']);
   if(tab==='cards'){
