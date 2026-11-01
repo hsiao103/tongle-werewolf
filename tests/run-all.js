@@ -5,4 +5,5 @@ for(const f of ['sim-games.js','sim-security.js','sim-ui.js','browser.js']){
   console.log('\n▶',f);const r=spawnSync(process.execPath,[path.join(__dirname,f)],{stdio:'inherit',env:process.env});
   if(r.status!==0){bad++;}
 }
+{console.log('\n▶ tools/verify-assets.py');const r=spawnSync('python3',[path.join(__dirname,'..','tools','verify-assets.py')],{stdio:'inherit'});if(r.status!==0)bad++;}
 console.log(bad?`\n✗ ${bad} 組測試失敗`:'\n✓ 全部通過');process.exit(bad?1:0);
