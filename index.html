@@ -13,9 +13,9 @@ body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,san
 body.ph-night{background:radial-gradient(1400px 800px at 50% -10%,#14143a,#03030c)}
 button{font:inherit;color:inherit;cursor:pointer}
 .btn{background:var(--ac);color:#10241a;border:0;border-radius:12px;padding:12px 18px;font-weight:700;font-size:16px}
-body.ark .btn{color:#04101f}
+body.ark .btn:not(.sec):not(.bad){color:#04101f}
 .btn.sec{background:var(--card);color:var(--tx);border:1px solid var(--line)}
-.btn.bad{background:var(--bad);color:#fff}
+.btn.bad{background:var(--bad);color:#1a0509}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .btn.sel{outline:3px solid var(--tx)}
 .btn.sm{padding:6px 10px;font-size:13px;border-radius:8px}
